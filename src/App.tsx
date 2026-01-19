@@ -9,6 +9,7 @@ import { AdminAuthProvider } from "@/contexts/AdminAuthContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import Index from "./pages/Index";
 import DiscoverPage from "./pages/DiscoverPage";
+import CityDetailPage from "./pages/CityDetailPage";
 import DestinationsPage from "./pages/DestinationsPage";
 import ExperiencesPage from "./pages/ExperiencesPage";
 import FestivalsPage from "./pages/FestivalsPage";
@@ -54,6 +55,7 @@ const App = () => (
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/decouvrir" element={<DiscoverPage />} />
+                    <Route path="/decouvrir/:cityId" element={<CityDetailPage />} />
                     <Route path="/destinations" element={<DestinationsPage />} />
                     <Route path="/experiences" element={<ExperiencesPage />} />
                     <Route path="/festivals" element={<FestivalsPage />} />

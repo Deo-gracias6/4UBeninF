@@ -1,285 +1,135 @@
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { TreePine, Landmark, Palette, MapPin, Clock, ArrowRight } from "lucide-react";
+import { Search, MapPin, Filter, ArrowRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import pendjariPark from "@/assets/pendjari-park.jpg";
-import ouidahDoor from "@/assets/ouidah-door.jpg";
-import festivalVodoun from "@/assets/festival-vodoun.jpg";
-import ganvieVillage from "@/assets/ganvie-village.jpg";
-
-const sections = [
-  {
-    id: "parcs",
-    icon: TreePine,
-    title: "Parcs nationaux",
-    description: "Explorez la faune sauvage africaine dans des réserves naturelles préservées",
-    items: [
-      {
-        name: "Parc National de la Pendjari",
-        image: pendjariPark,
-        description: "L'un des derniers refuges de faune sauvage en Afrique de l'Ouest. Lions, éléphants, buffles et antilopes.",
-        price: 85000,
-        duration: "3 jours",
-        level: "Aventure",
-      },
-      {
-        name: "Parc National du W",
-        image: pendjariPark,
-        description: "Parc transfrontalier UNESCO, habitat unique de guépards et d'espèces rares.",
-        price: 95000,
-        duration: "4 jours",
-        level: "Aventure",
-      },
-    ],
-  },
-  {
-    id: "sites",
-    icon: Landmark,
-    title: "Sites historiques",
-    description: "Plongez dans l'histoire riche et complexe du Bénin",
-    items: [
-      {
-        name: "Route des Esclaves - Ouidah",
-        image: ouidahDoor,
-        description: "Parcours mémoriel de 4km jusqu'à la Porte du Non-Retour. Un témoignage poignant de l'histoire.",
-        price: 25000,
-        duration: "4 heures",
-        level: "Culturel",
-      },
-      {
-        name: "Palais Royaux d'Abomey",
-        image: ouidahDoor,
-        description: "Classés au patrimoine mondial UNESCO, ces palais témoignent de la puissance du royaume du Dahomey.",
-        price: 30000,
-        duration: "5 heures",
-        level: "Culturel",
-      },
-    ],
-  },
-  {
-    id: "culture",
-    icon: Palette,
-    title: "Découvertes culturelles",
-    description: "Immergez-vous dans les traditions vivantes du Bénin",
-    items: [
-      {
-        name: "Village lacustre de Ganvié",
-        image: ganvieVillage,
-        description: "Surnommée la Venise de l'Afrique, cette cité sur pilotis abrite 30 000 habitants.",
-        price: 35000,
-        duration: "1 jour",
-        level: "Découverte",
-      },
-      {
-        name: "Temple des Pythons",
-        image: festivalVodoun,
-        description: "Sanctuaire sacré vodoun où vivent des dizaines de pythons royaux vénérés.",
-        price: 15000,
-        duration: "2 heures",
-        level: "Spirituel",
-      },
-    ],
-  },
-];
+import { beninCities, departments, regions } from "@/data/beninCities";
 
 export default function DiscoverPage() {
+  const [search, setSearch] = useState("");
+  const [selectedRegion, setSelectedRegion] = useState<string>("");
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("");
+
+  const filteredCities = useMemo(() => {
+    return beninCities.filter(city => {
+      const matchesSearch = city.name.toLowerCase().includes(search.toLowerCase()) ||
+        city.shortDescription.toLowerCase().includes(search.toLowerCase());
+      const matchesRegion = !selectedRegion || city.region === selectedRegion;
+      const matchesDept = !selectedDepartment || city.department === selectedDepartment;
+      return matchesSearch && matchesRegion && matchesDept;
+    });
+  }, [search, selectedRegion, selectedDepartment]);
+
   return (
     <main className="pt-20">
       {/* Hero */}
-      <section className="relative py-24 overflow-hidden">
-        <div className="absolute inset-0 gradient-hero opacity-10" />
+      <section className="relative py-20 overflow-hidden gradient-hero">
         <div className="container mx-auto px-4 relative">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-3xl mx-auto text-center"
-          >
-            <span className="text-primary font-medium text-sm uppercase tracking-wider">
-              Patrimoine & Culture
-            </span>
-            <h1 className="font-serif text-4xl md:text-6xl font-bold mt-4 mb-6">
-              Découvrir le <span className="text-gradient">Bénin</span>
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto text-center text-white">
+            <h1 className="font-serif text-4xl md:text-5xl font-bold mb-4">
+              Découvrir le Bénin
             </h1>
-            <p className="text-muted-foreground text-lg">
-              Des réserves naturelles aux sites historiques, en passant par les traditions 
-              vivantes du vodoun, le Bénin offre une richesse culturelle incomparable.
+            <p className="text-white/80 text-lg mb-8">
+              Explorez les 77 communes du Bénin, de la côte atlantique aux savanes du nord
             </p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Country Overview */}
-      <section className="py-16 bg-secondary">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-              <h2 className="font-serif text-3xl md:text-4xl font-bold mb-6">
-                Un pays aux mille visages
-              </h2>
-              <p className="text-muted-foreground mb-4">
-                Le Bénin, berceau du vodoun et terre des anciens royaumes du Dahomey, 
-                est une destination d'exception en Afrique de l'Ouest.
-              </p>
-              <p className="text-muted-foreground mb-6">
-                De sa côte atlantique à ses savanes du nord, des cités lacustres aux 
-                palais royaux, chaque région raconte une histoire unique.
-              </p>
-              
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { label: "Superficie", value: "114 763 km²" },
-                  { label: "Population", value: "13 millions" },
-                  { label: "Capitale", value: "Porto-Novo" },
-                  { label: "Langue", value: "Français" },
-                ].map((item, idx) => (
-                  <div key={idx} className="p-4 rounded-xl bg-card">
-                    <div className="text-muted-foreground text-sm">{item.label}</div>
-                    <div className="font-semibold">{item.value}</div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="grid grid-cols-2 gap-4"
-            >
-              <div className="space-y-4">
-                <img
-                  src={ganvieVillage}
-                  alt="Ganvié"
-                  className="rounded-2xl h-48 w-full object-cover"
-                />
-                <img
-                  src={pendjariPark}
-                  alt="Pendjari"
-                  className="rounded-2xl h-64 w-full object-cover"
-                />
-              </div>
-              <div className="space-y-4 pt-8">
-                <img
-                  src={ouidahDoor}
-                  alt="Ouidah"
-                  className="rounded-2xl h-64 w-full object-cover"
-                />
-                <img
-                  src={festivalVodoun}
-                  alt="Festival"
-                  className="rounded-2xl h-48 w-full object-cover"
-                />
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Sections */}
-      {sections.map((section, sectionIdx) => (
-        <section
-          key={section.id}
-          id={section.id}
-          className={`py-20 ${sectionIdx % 2 === 1 ? "bg-secondary" : ""}`}
-        >
-          <div className="container mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="flex items-center gap-4 mb-8"
-            >
-              <div className="w-14 h-14 rounded-xl gradient-hero flex items-center justify-center">
-                <section.icon className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h2 className="font-serif text-2xl md:text-3xl font-bold">
-                  {section.title}
-                </h2>
-                <p className="text-muted-foreground">{section.description}</p>
-              </div>
-            </motion.div>
-
-            <div className="grid md:grid-cols-2 gap-8">
-              {section.items.map((item, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="group bg-card rounded-2xl overflow-hidden shadow-elegant hover:shadow-lg transition-all"
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4">
+              <div className="flex flex-col md:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    placeholder="Rechercher une ville..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-10 bg-white"
+                  />
+                </div>
+                <select
+                  value={selectedRegion}
+                  onChange={(e) => setSelectedRegion(e.target.value)}
+                  className="px-4 py-2 rounded-lg bg-white text-foreground"
                 >
-                  <div className="relative h-56 overflow-hidden">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    <div className="absolute top-4 left-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-primary text-primary-foreground">
-                        {item.level}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <h3 className="font-serif text-xl font-semibold mb-2">
-                      {item.name}
-                    </h3>
-                    <p className="text-muted-foreground text-sm mb-4">
-                      {item.description}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-sm">
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-4 h-4 text-primary" />
-                          {item.duration}
-                        </span>
-                        <span className="font-semibold text-primary">
-                          {item.price.toLocaleString()} FCFA
-                        </span>
-                      </div>
-                      <Link to="/moteur">
-                        <Button size="sm" className="gap-1">
-                          Ajouter
-                          <ArrowRight className="w-4 h-4" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+                  <option value="">Toutes les régions</option>
+                  {regions.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+                <select
+                  value={selectedDepartment}
+                  onChange={(e) => setSelectedDepartment(e.target.value)}
+                  className="px-4 py-2 rounded-lg bg-white text-foreground"
+                >
+                  <option value="">Tous les départements</option>
+                  {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
             </div>
-          </div>
-        </section>
-      ))}
-
-      {/* CTA */}
-      <section className="py-20 gradient-hero">
-        <div className="container mx-auto px-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-white mb-4">
-              Prêt à explorer ?
-            </h2>
-            <p className="text-white/80 mb-8 max-w-xl mx-auto">
-              Utilisez notre moteur intelligent pour créer votre itinéraire 
-              personnalisé incluant ces merveilles.
-            </p>
-            <Link to="/moteur">
-              <Button variant="gold" size="xl" className="gap-2">
-                Créer mon voyage
-                <ArrowRight className="w-5 h-5" />
-              </Button>
-            </Link>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section className="py-8 bg-secondary">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-center gap-8 text-center">
+            <div><div className="text-3xl font-bold text-primary">77</div><div className="text-sm text-muted-foreground">Communes</div></div>
+            <div><div className="text-3xl font-bold text-primary">12</div><div className="text-sm text-muted-foreground">Départements</div></div>
+            <div><div className="text-3xl font-bold text-primary">3</div><div className="text-sm text-muted-foreground">Régions</div></div>
+          </div>
+        </div>
+      </section>
+
+      {/* Cities Grid */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="font-serif text-2xl font-bold">
+              {filteredCities.length} ville{filteredCities.length > 1 ? 's' : ''} trouvée{filteredCities.length > 1 ? 's' : ''}
+            </h2>
+            {(search || selectedRegion || selectedDepartment) && (
+              <Button variant="outline" size="sm" onClick={() => { setSearch(""); setSelectedRegion(""); setSelectedDepartment(""); }}>
+                <Filter className="w-4 h-4 mr-2" /> Réinitialiser
+              </Button>
+            )}
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredCities.map((city, idx) => (
+              <motion.div
+                key={city.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.02 }}
+                className="group bg-card rounded-2xl overflow-hidden shadow-elegant hover:shadow-lg transition-all"
+              >
+                <div className="relative h-40 overflow-hidden">
+                  <img src={city.image} alt={city.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent" />
+                  <div className="absolute top-3 right-3">
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-primary text-primary-foreground">{city.region}</span>
+                  </div>
+                  <div className="absolute bottom-3 left-3">
+                    <h3 className="font-serif text-lg font-semibold text-white">{city.name}</h3>
+                    <div className="flex items-center gap-1 text-white/80 text-xs">
+                      <MapPin className="w-3 h-3" /> {city.department}
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <p className="text-muted-foreground text-sm line-clamp-2 mb-4">{city.shortDescription}</p>
+                  <Link to={`/decouvrir/${city.id}`}>
+                    <Button variant="outline" size="sm" className="w-full gap-1">
+                      En savoir plus <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </Link>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {filteredCities.length === 0 && (
+            <div className="text-center py-16">
+              <p className="text-muted-foreground">Aucune ville ne correspond à votre recherche.</p>
+            </div>
+          )}
         </div>
       </section>
     </main>
