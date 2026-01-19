@@ -224,7 +224,7 @@ export default function DestinationsPage() {
                     </div>
                   </div>
 
-                  <Link to="/moteur">
+                  <Link to={`/decouvrir/${dest.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-")}`}>
                     <Button className="w-full gap-2">
                       Découvrir
                       <ArrowRight className="w-4 h-4" />
