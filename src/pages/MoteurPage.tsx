@@ -1,350 +1,302 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
-import {
-  Sparkles,
-  Calendar,
-  Users,
-  Wallet,
-  Heart,
-  MapPin,
-  Clock,
-  ChevronRight,
-  ChevronLeft,
-  Check,
-  Star,
-  Plane,
-  Sun,
-  Mountain,
-  Landmark,
-  TreePine,
-  Palette,
-  Utensils,
-  ArrowRight,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
-import cotonouCity from "@/assets/cotonou-city.jpg";
-import ganvieVillage from "@/assets/ganvie-village.jpg";
-import pendjariPark from "@/assets/pendjari-park.jpg";
-import ouidahDoor from "@/assets/ouidah-door.jpg";
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, Check, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import BudgetSelector, { BudgetTier, budgetTiers } from '@/components/moteur/BudgetSelector';
+import DateSelector from '@/components/moteur/DateSelector';
+import InterestsSelector from '@/components/moteur/InterestsSelector';
+import AuthPrompt from '@/components/moteur/AuthPrompt';
+import ItineraryResult, { ItineraryDay } from '@/components/moteur/ItineraryResult';
 
-const interests = [
-  { id: "culture", label: "Culture & Histoire", icon: Landmark },
-  { id: "nature", label: "Nature & Safari", icon: TreePine },
-  { id: "beach", label: "Plages & Détente", icon: Sun },
-  { id: "adventure", label: "Aventure", icon: Mountain },
-  { id: "gastro", label: "Gastronomie", icon: Utensils },
-  { id: "art", label: "Art & Artisanat", icon: Palette },
-];
+import cotonouCity from '@/assets/cotonou-city.jpg';
+import ganvieVillage from '@/assets/ganvie-village.jpg';
+import pendjariPark from '@/assets/pendjari-park.jpg';
+import ouidahDoor from '@/assets/ouidah-door.jpg';
 
-const travelTypes = [
-  { id: "solo", label: "Solo", icon: "🧑" },
-  { id: "couple", label: "Couple", icon: "💑" },
-  { id: "family", label: "Famille", icon: "👨‍👩‍👧‍👦" },
-  { id: "friends", label: "Amis", icon: "👥" },
-  { id: "business", label: "Affaires", icon: "💼" },
-];
+// Mock itinerary data with times
+const generateMockItinerary = (days: number, budget: BudgetTier['id']): ItineraryDay[] => {
+  const baseItinerary: ItineraryDay[] = [
+    {
+      day: 1,
+      city: 'Cotonou',
+      image: cotonouCity,
+      activities: [
+        { time: '14:00', description: 'Arrivée à l\'aéroport de Cotonou' },
+        { time: '16:00', description: budget === 'vip' ? 'Installation au Sofitel Marina 5*' : budget === 'premium' ? 'Installation à l\'hôtel Azalaï 4*' : 'Installation à l\'hôtel du Port' },
+        { time: '18:00', description: 'Visite du Marché Dantokpa' },
+        { time: '20:00', description: 'Dîner de bienvenue' },
+      ],
+    },
+    {
+      day: 2,
+      city: 'Ganvié',
+      image: ganvieVillage,
+      activities: [
+        { time: '08:00', description: 'Petit-déjeuner à l\'hôtel' },
+        { time: '09:30', description: 'Excursion en pirogue à Ganvié' },
+        { time: '12:00', description: 'Déjeuner chez l\'habitant' },
+        { time: '15:00', description: 'Découverte du village lacustre' },
+        { time: '18:00', description: 'Retour et temps libre' },
+      ],
+    },
+    {
+      day: 3,
+      city: 'Ouidah',
+      image: ouidahDoor,
+      activities: [
+        { time: '08:00', description: 'Route vers Ouidah (1h)' },
+        { time: '09:30', description: 'Temple des Pythons' },
+        { time: '11:00', description: 'Route des Esclaves' },
+        { time: '13:00', description: 'Déjeuner local' },
+        { time: '15:00', description: 'Porte du Non-Retour' },
+        { time: '17:00', description: budget === 'vip' ? 'Cérémonie vodoun privée' : 'Visite du musée historique' },
+      ],
+    },
+    {
+      day: 4,
+      city: 'Grand-Popo',
+      image: ganvieVillage,
+      activities: [
+        { time: '09:00', description: 'Route vers Grand-Popo' },
+        { time: '11:00', description: 'Détente sur les plages' },
+        { time: '13:00', description: 'Déjeuner de fruits de mer' },
+        { time: '15:00', description: 'Excursion à la Bouche du Roy' },
+        { time: '18:00', description: 'Cours de cuisine locale' },
+      ],
+    },
+    {
+      day: 5,
+      city: 'Abomey',
+      image: ouidahDoor,
+      activities: [
+        { time: '08:00', description: 'Route vers Abomey (2h)' },
+        { time: '10:30', description: 'Visite des Palais Royaux (UNESCO)' },
+        { time: '13:00', description: 'Déjeuner au restaurant du palais' },
+        { time: '15:00', description: 'Atelier bronze traditionnel' },
+        { time: '17:00', description: 'Musée Historique d\'Abomey' },
+      ],
+    },
+    {
+      day: 6,
+      city: 'Natitingou',
+      image: pendjariPark,
+      activities: [
+        { time: '07:00', description: budget === 'vip' ? 'Vol intérieur vers le Nord' : 'Route vers le Nord (départ tôt)' },
+        { time: '12:00', description: 'Arrivée et installation' },
+        { time: '14:00', description: 'Visite des Tata Somba' },
+        { time: '17:00', description: 'Coucher de soleil sur les collines' },
+      ],
+    },
+    {
+      day: 7,
+      city: 'Pendjari',
+      image: pendjariPark,
+      activities: [
+        { time: '05:30', description: 'Safari au lever du soleil' },
+        { time: '08:00', description: 'Observation de la faune' },
+        { time: '12:00', description: 'Déjeuner au lodge' },
+        { time: '15:00', description: 'Safari après-midi' },
+        { time: '19:00', description: 'Dîner sous les étoiles' },
+      ],
+    },
+    {
+      day: 8,
+      city: 'Pendjari',
+      image: pendjariPark,
+      activities: [
+        { time: '06:00', description: 'Safari matinal' },
+        { time: '10:00', description: 'Cascades de Tanougou' },
+        { time: '13:00', description: 'Pique-nique en brousse' },
+        { time: '16:00', description: 'Retour au lodge' },
+      ],
+    },
+    {
+      day: 9,
+      city: 'Parakou',
+      image: cotonouCity,
+      activities: [
+        { time: '08:00', description: 'Route vers Parakou' },
+        { time: '12:00', description: 'Découverte de la ville' },
+        { time: '14:00', description: 'Marché central' },
+        { time: '17:00', description: 'Temps libre' },
+      ],
+    },
+    {
+      day: 10,
+      city: 'Cotonou',
+      image: cotonouCity,
+      activities: [
+        { time: '09:00', description: budget === 'vip' ? 'Vol retour vers Cotonou' : 'Route retour vers Cotonou' },
+        { time: '14:00', description: 'Shopping artisanat' },
+        { time: '16:00', description: 'Plage de Fidjrossè' },
+        { time: '20:00', description: 'Dîner d\'adieu' },
+      ],
+    },
+  ];
 
-interface ItineraryDay {
-  day: number;
-  city: string;
-  activities: string[];
-  image: string;
-}
+  return baseItinerary.slice(0, days);
+};
 
-const mockItinerary: ItineraryDay[] = [
-  {
-    day: 1,
-    city: "Cotonou",
-    image: cotonouCity,
-    activities: [
-      "Arrivée à l'aéroport de Cotonou",
-      "Installation à l'hôtel 4*",
-      "Visite du Marché Dantokpa",
-      "Dîner de bienvenue",
-    ],
-  },
-  {
-    day: 2,
-    city: "Ganvié",
-    image: ganvieVillage,
-    activities: [
-      "Excursion en pirogue à Ganvié",
-      "Découverte du village lacustre",
-      "Déjeuner chez l'habitant",
-      "Retour et temps libre",
-    ],
-  },
-  {
-    day: 3,
-    city: "Ouidah",
-    image: ouidahDoor,
-    activities: [
-      "Route vers Ouidah",
-      "Route des Esclaves",
-      "Temple des Pythons",
-      "Porte du Non-Retour",
-    ],
-  },
-  {
-    day: 4,
-    city: "Grand-Popo",
-    image: ganvieVillage,
-    activities: [
-      "Détente sur les plages",
-      "Excursion à la Bouche du Roy",
-      "Cours de cuisine locale",
-      "Nuit en écolodge",
-    ],
-  },
-  {
-    day: 5,
-    city: "Abomey",
-    image: ouidahDoor,
-    activities: [
-      "Visite des Palais Royaux (UNESCO)",
-      "Atelier bronze traditionnel",
-      "Musée Historique d'Abomey",
-      "Rencontre avec artisans locaux",
-    ],
-  },
-  {
-    day: 6,
-    city: "Pendjari",
-    image: pendjariPark,
-    activities: [
-      "Route vers le Nord (vol intérieur)",
-      "Safari découverte au parc",
-      "Observation faune sauvage",
-      "Nuit en lodge safari",
-    ],
-  },
-  {
-    day: 7,
-    city: "Pendjari / Cotonou",
-    image: pendjariPark,
-    activities: [
-      "Safari au lever du soleil",
-      "Cascades de Tanougou",
-      "Vol retour vers Cotonou",
-      "Départ ou extension",
-    ],
-  },
-];
+type Step = 'budget' | 'dates' | 'interests' | 'auth' | 'generating' | 'result';
 
-export default function EngineMoteurPage() {
-  const [step, setStep] = useState(1);
-  const [budget, setBudget] = useState([500000]);
-  const [days, setDays] = useState([7]);
+const stepOrder: Step[] = ['budget', 'dates', 'interests', 'auth', 'generating', 'result'];
+
+const stepLabels: Record<Step, string> = {
+  budget: 'Budget',
+  dates: 'Dates',
+  interests: 'Préférences',
+  auth: 'Connexion',
+  generating: 'Génération',
+  result: 'Itinéraire',
+};
+
+export default function MoteurPage() {
+  const [currentStep, setCurrentStep] = useState<Step>('budget');
+  const [selectedBudget, setSelectedBudget] = useState<BudgetTier | null>(null);
+  const [arrivalDate, setArrivalDate] = useState<Date | undefined>(undefined);
+  const [numberOfDays, setNumberOfDays] = useState(7);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>(['culture', 'nature']);
+  const [travelType, setTravelType] = useState('couple');
   const [travelers, setTravelers] = useState(2);
-  const [travelType, setTravelType] = useState("couple");
-  const [selectedInterests, setSelectedInterests] = useState<string[]>(["culture", "nature"]);
-  const [startDate, setStartDate] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [itinerary, setItinerary] = useState<ItineraryDay[] | null>(null);
 
-  const toggleInterest = (id: string) => {
-    setSelectedInterests((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+  const currentStepIndex = stepOrder.indexOf(currentStep);
+
+  const canProceed = () => {
+    switch (currentStep) {
+      case 'budget':
+        return selectedBudget !== null;
+      case 'dates':
+        return arrivalDate !== undefined && numberOfDays >= 2;
+      case 'interests':
+        return selectedInterests.length > 0;
+      default:
+        return true;
+    }
   };
 
-  const generateItinerary = () => {
-    setIsGenerating(true);
+  const goToNextStep = () => {
+    const nextIndex = currentStepIndex + 1;
+    if (nextIndex < stepOrder.length) {
+      setCurrentStep(stepOrder[nextIndex]);
+    }
+  };
+
+  const goToPrevStep = () => {
+    const prevIndex = currentStepIndex - 1;
+    if (prevIndex >= 0) {
+      setCurrentStep(stepOrder[prevIndex]);
+    }
+  };
+
+  const handleAuthenticated = (authenticatedUser: { name: string; email: string }) => {
+    setUser(authenticatedUser);
+    setCurrentStep('generating');
+    
     // Simulate AI generation
     setTimeout(() => {
-      setItinerary(mockItinerary.slice(0, days[0]));
-      setIsGenerating(false);
-      setStep(4);
-    }, 2500);
+      setItinerary(generateMockItinerary(numberOfDays, selectedBudget!.id));
+      setCurrentStep('result');
+    }, 3000);
   };
 
-  const totalPrice = budget[0];
-  const pricePerDay = Math.round(totalPrice / days[0]);
-  const pricePerPerson = Math.round(totalPrice / travelers);
+  const handleRestart = () => {
+    setCurrentStep('budget');
+    setSelectedBudget(null);
+    setArrivalDate(undefined);
+    setNumberOfDays(7);
+    setSelectedInterests(['culture', 'nature']);
+    setTravelType('couple');
+    setTravelers(2);
+    setUser(null);
+    setItinerary(null);
+  };
 
   return (
     <main className="pt-20 min-h-screen">
-      {/* Hero */}
-      <section className="relative py-16 overflow-hidden">
+      {/* Hero Section */}
+      <section className="relative py-12 overflow-hidden">
         <div className="absolute inset-0 gradient-hero opacity-10" />
         <div className="absolute inset-0 pattern-african opacity-5" />
-        
+
         <div className="container mx-auto px-4 relative z-10">
+          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
+            className="text-center mb-10"
           >
             <motion.div
               animate={{ scale: [1, 1.1, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
-              className="inline-flex items-center justify-center w-20 h-20 rounded-full gradient-hero mb-6 shadow-purple"
+              className="inline-flex items-center justify-center w-16 h-16 rounded-full gradient-hero mb-4 shadow-purple"
             >
-              <Sparkles className="w-10 h-10 text-white" />
+              <Sparkles className="w-8 h-8 text-white" />
             </motion.div>
-            <h1 className="font-serif text-4xl md:text-6xl font-bold mb-4">
+            <h1 className="font-serif text-3xl md:text-5xl font-bold mb-3">
               Moteur <span className="text-gradient">Intelligent</span>
             </h1>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Créez votre voyage personnalisé en quelques étapes. Notre algorithme 
-              intelligent génère l'itinéraire parfait selon vos envies.
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Créez votre itinéraire personnalisé en quelques étapes simples
             </p>
           </motion.div>
 
           {/* Progress Steps */}
-          <div className="max-w-3xl mx-auto mb-12">
-            <div className="flex items-center justify-between">
-              {[
-                { num: 1, label: "Budget & Durée" },
-                { num: 2, label: "Préférences" },
-                { num: 3, label: "Génération" },
-                { num: 4, label: "Itinéraire" },
-              ].map((s, idx) => (
-                <div key={s.num} className="flex items-center">
-                  <div className="flex flex-col items-center">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-all ${
-                        step >= s.num
-                          ? "gradient-hero text-white shadow-purple"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {step > s.num ? <Check className="w-5 h-5" /> : s.num}
+          {currentStep !== 'result' && (
+            <div className="max-w-3xl mx-auto mb-10">
+              <div className="flex items-center justify-between">
+                {stepOrder.slice(0, 5).map((step, idx) => (
+                  <div key={step} className="flex items-center">
+                    <div className="flex flex-col items-center">
+                      <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-all ${
+                          currentStepIndex >= idx
+                            ? 'gradient-hero text-white shadow-purple'
+                            : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        {currentStepIndex > idx ? <Check className="w-5 h-5" /> : idx + 1}
+                      </div>
+                      <span className="text-xs mt-2 text-muted-foreground hidden md:block">
+                        {stepLabels[step]}
+                      </span>
                     </div>
-                    <span className="text-xs mt-2 text-muted-foreground hidden md:block">
-                      {s.label}
-                    </span>
+                    {idx < 4 && (
+                      <div
+                        className={`w-12 md:w-20 h-1 mx-2 rounded-full transition-all ${
+                          currentStepIndex > idx ? 'bg-primary' : 'bg-muted'
+                        }`}
+                      />
+                    )}
                   </div>
-                  {idx < 3 && (
-                    <div
-                      className={`w-16 md:w-24 h-1 mx-2 rounded-full transition-all ${
-                        step > s.num ? "bg-primary" : "bg-muted"
-                      }`}
-                    />
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Form Steps */}
-          <div className="max-w-4xl mx-auto">
+          {/* Form Content */}
+          <div className="max-w-5xl mx-auto">
             <AnimatePresence mode="wait">
-              {/* Step 1: Budget & Duration */}
-              {step === 1 && (
+              {/* Step 1: Budget Selection */}
+              {currentStep === 'budget' && (
                 <motion.div
-                  key="step1"
+                  key="budget"
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
-                  className="bg-card rounded-3xl p-8 md:p-12 shadow-elegant"
                 >
-                  <h2 className="font-serif text-2xl md:text-3xl font-bold mb-8 text-center">
-                    Définissez votre voyage
-                  </h2>
-
-                  <div className="space-y-10">
-                    {/* Budget */}
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <label className="flex items-center gap-2 font-medium">
-                          <Wallet className="w-5 h-5 text-primary" />
-                          Budget total
-                        </label>
-                        <span className="text-2xl font-bold text-primary">
-                          {budget[0].toLocaleString()} FCFA
-                        </span>
-                      </div>
-                      <Slider
-                        value={budget}
-                        onValueChange={setBudget}
-                        min={100000}
-                        max={2000000}
-                        step={50000}
-                        className="py-4"
-                      />
-                      <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>100,000 FCFA</span>
-                        <span>2,000,000 FCFA</span>
-                      </div>
-                    </div>
-
-                    {/* Duration */}
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <label className="flex items-center gap-2 font-medium">
-                          <Calendar className="w-5 h-5 text-primary" />
-                          Nombre de jours
-                        </label>
-                        <span className="text-2xl font-bold text-primary">
-                          {days[0]} jours
-                        </span>
-                      </div>
-                      <Slider
-                        value={days}
-                        onValueChange={setDays}
-                        min={2}
-                        max={14}
-                        step={1}
-                        className="py-4"
-                      />
-                      <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>2 jours</span>
-                        <span>14 jours</span>
-                      </div>
-                    </div>
-
-                    {/* Travelers */}
-                    <div>
-                      <label className="flex items-center gap-2 font-medium mb-4">
-                        <Users className="w-5 h-5 text-primary" />
-                        Nombre de voyageurs
-                      </label>
-                      <div className="flex items-center gap-4">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => setTravelers(Math.max(1, travelers - 1))}
-                        >
-                          -
-                        </Button>
-                        <span className="text-3xl font-bold w-16 text-center">
-                          {travelers}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => setTravelers(Math.min(10, travelers + 1))}
-                        >
-                          +
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Start Date */}
-                    <div>
-                      <label className="flex items-center gap-2 font-medium mb-4">
-                        <Plane className="w-5 h-5 text-primary" />
-                        Date de départ
-                      </label>
-                      <Input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="h-12 text-lg"
-                      />
-                    </div>
-                  </div>
-
+                  <BudgetSelector
+                    selectedBudget={selectedBudget?.id || null}
+                    onSelect={(tier) => setSelectedBudget(tier)}
+                  />
                   <div className="mt-10 flex justify-end">
                     <Button
-                      onClick={() => setStep(2)}
+                      onClick={goToNextStep}
                       variant="hero"
                       size="xl"
                       className="gap-2"
+                      disabled={!canProceed()}
                     >
                       Continuer
                       <ChevronRight className="w-5 h-5" />
@@ -353,110 +305,104 @@ export default function EngineMoteurPage() {
                 </motion.div>
               )}
 
-              {/* Step 2: Preferences */}
-              {step === 2 && (
+              {/* Step 2: Date Selection */}
+              {currentStep === 'dates' && (
                 <motion.div
-                  key="step2"
+                  key="dates"
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
-                  className="bg-card rounded-3xl p-8 md:p-12 shadow-elegant"
                 >
-                  <h2 className="font-serif text-2xl md:text-3xl font-bold mb-8 text-center">
-                    Vos préférences
-                  </h2>
-
-                  <div className="space-y-10">
-                    {/* Travel Type */}
-                    <div>
-                      <label className="flex items-center gap-2 font-medium mb-4">
-                        <Users className="w-5 h-5 text-primary" />
-                        Type de voyage
-                      </label>
-                      <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
-                        {travelTypes.map((type) => (
-                          <button
-                            key={type.id}
-                            onClick={() => setTravelType(type.id)}
-                            className={`p-4 rounded-xl text-center transition-all ${
-                              travelType === type.id
-                                ? "bg-primary text-primary-foreground shadow-purple"
-                                : "bg-secondary hover:bg-muted"
-                            }`}
-                          >
-                            <span className="text-2xl block mb-1">{type.icon}</span>
-                            <span className="text-sm font-medium">{type.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Interests */}
-                    <div>
-                      <label className="flex items-center gap-2 font-medium mb-4">
-                        <Heart className="w-5 h-5 text-primary" />
-                        Centres d'intérêt (sélectionnez plusieurs)
-                      </label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {interests.map((interest) => (
-                          <button
-                            key={interest.id}
-                            onClick={() => toggleInterest(interest.id)}
-                            className={`flex items-center gap-3 p-4 rounded-xl transition-all ${
-                              selectedInterests.includes(interest.id)
-                                ? "bg-primary text-primary-foreground shadow-purple"
-                                : "bg-secondary hover:bg-muted"
-                            }`}
-                          >
-                            <interest.icon className="w-6 h-6" />
-                            <span className="font-medium">{interest.label}</span>
-                            {selectedInterests.includes(interest.id) && (
-                              <Check className="w-5 h-5 ml-auto" />
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
+                  <DateSelector
+                    arrivalDate={arrivalDate}
+                    onArrivalDateChange={setArrivalDate}
+                    numberOfDays={numberOfDays}
+                    onNumberOfDaysChange={setNumberOfDays}
+                  />
                   <div className="mt-10 flex justify-between">
-                    <Button
-                      onClick={() => setStep(1)}
-                      variant="ghost"
-                      size="lg"
-                      className="gap-2"
-                    >
+                    <Button onClick={goToPrevStep} variant="ghost" size="lg" className="gap-2">
                       <ChevronLeft className="w-5 h-5" />
                       Retour
                     </Button>
                     <Button
-                      onClick={() => {
-                        setStep(3);
-                        generateItinerary();
-                      }}
+                      onClick={goToNextStep}
                       variant="hero"
                       size="xl"
                       className="gap-2"
+                      disabled={!canProceed()}
                     >
-                      <Sparkles className="w-5 h-5" />
-                      Générer mon itinéraire
+                      Continuer
+                      <ChevronRight className="w-5 h-5" />
                     </Button>
                   </div>
                 </motion.div>
               )}
 
-              {/* Step 3: Generating */}
-              {step === 3 && (
+              {/* Step 3: Interests Selection */}
+              {currentStep === 'interests' && (
                 <motion.div
-                  key="step3"
+                  key="interests"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                >
+                  <InterestsSelector
+                    selectedInterests={selectedInterests}
+                    onInterestsChange={setSelectedInterests}
+                    selectedTravelType={travelType}
+                    onTravelTypeChange={setTravelType}
+                    travelers={travelers}
+                    onTravelersChange={setTravelers}
+                  />
+                  <div className="mt-10 flex justify-between">
+                    <Button onClick={goToPrevStep} variant="ghost" size="lg" className="gap-2">
+                      <ChevronLeft className="w-5 h-5" />
+                      Retour
+                    </Button>
+                    <Button
+                      onClick={goToNextStep}
+                      variant="hero"
+                      size="xl"
+                      className="gap-2"
+                      disabled={!canProceed()}
+                    >
+                      Continuer
+                      <ChevronRight className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 4: Authentication */}
+              {currentStep === 'auth' && (
+                <motion.div
+                  key="auth"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                >
+                  <AuthPrompt onAuthenticated={handleAuthenticated} />
+                  <div className="mt-8 flex justify-center">
+                    <Button onClick={goToPrevStep} variant="ghost" size="lg" className="gap-2">
+                      <ChevronLeft className="w-5 h-5" />
+                      Modifier mes préférences
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 5: Generating */}
+              {currentStep === 'generating' && (
+                <motion.div
+                  key="generating"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="bg-card rounded-3xl p-12 md:p-16 shadow-elegant text-center"
+                  className="bg-card rounded-3xl p-12 md:p-16 shadow-elegant text-center max-w-2xl mx-auto"
                 >
                   <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
                     className="inline-flex items-center justify-center w-24 h-24 rounded-full gradient-hero mb-8 shadow-purple"
                   >
                     <Sparkles className="w-12 h-12 text-white" />
@@ -466,156 +412,54 @@ export default function EngineMoteurPage() {
                     Génération en cours...
                   </h2>
                   <p className="text-muted-foreground mb-8">
-                    Notre intelligence artificielle crée votre itinéraire parfait
+                    Notre IA crée votre itinéraire parfait
                   </p>
 
-                  <div className="max-w-md mx-auto">
-                    <div className="space-y-3">
-                      {[
-                        "Analyse de vos préférences",
-                        "Sélection des destinations",
-                        "Optimisation du parcours",
-                        "Calcul des prix",
-                      ].map((item, idx) => (
+                  <div className="max-w-md mx-auto space-y-3">
+                    {[
+                      'Analyse de vos préférences',
+                      'Sélection des destinations',
+                      'Optimisation du parcours',
+                      'Calcul du budget détaillé',
+                    ].map((item, idx) => (
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.6 }}
+                        className="flex items-center gap-3 text-left"
+                      >
                         <motion.div
-                          key={idx}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: idx * 0.5 }}
-                          className="flex items-center gap-3 text-left"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: idx * 0.6 + 0.4 }}
+                          className="w-6 h-6 rounded-full bg-nature/20 flex items-center justify-center"
                         >
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ delay: idx * 0.5 + 0.3 }}
-                            className="w-6 h-6 rounded-full bg-nature/20 flex items-center justify-center"
-                          >
-                            <Check className="w-4 h-4 text-nature" />
-                          </motion.div>
-                          <span>{item}</span>
+                          <Check className="w-4 h-4 text-nature" />
                         </motion.div>
-                      ))}
-                    </div>
+                        <span>{item}</span>
+                      </motion.div>
+                    ))}
                   </div>
                 </motion.div>
               )}
 
-              {/* Step 4: Itinerary */}
-              {step === 4 && itinerary && (
+              {/* Step 6: Result */}
+              {currentStep === 'result' && itinerary && selectedBudget && arrivalDate && (
                 <motion.div
-                  key="step4"
+                  key="result"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="space-y-8"
                 >
-                  {/* Summary Card */}
-                  <div className="bg-gradient-to-br from-primary via-primary/90 to-accent rounded-3xl p-8 text-white shadow-purple">
-                    <div className="flex items-start justify-between mb-6">
-                      <div>
-                        <h2 className="font-serif text-2xl md:text-3xl font-bold mb-2">
-                          Votre voyage personnalisé
-                        </h2>
-                        <p className="text-white/80">
-                          Itinéraire optimisé pour {days[0]} jours
-                        </p>
-                      </div>
-                      <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center">
-                        <Star className="w-8 h-8 text-accent" />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="p-4 rounded-xl bg-white/10">
-                        <div className="text-white/60 text-sm mb-1">Budget total</div>
-                        <div className="text-xl font-bold">{totalPrice.toLocaleString()} FCFA</div>
-                      </div>
-                      <div className="p-4 rounded-xl bg-white/10">
-                        <div className="text-white/60 text-sm mb-1">Par jour</div>
-                        <div className="text-xl font-bold">{pricePerDay.toLocaleString()} FCFA</div>
-                      </div>
-                      <div className="p-4 rounded-xl bg-white/10">
-                        <div className="text-white/60 text-sm mb-1">Par personne</div>
-                        <div className="text-xl font-bold">{pricePerPerson.toLocaleString()} FCFA</div>
-                      </div>
-                      <div className="p-4 rounded-xl bg-white/10">
-                        <div className="text-white/60 text-sm mb-1">Voyageurs</div>
-                        <div className="text-xl font-bold">{travelers} personne{travelers > 1 ? "s" : ""}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Day by Day */}
-                  <div className="space-y-4">
-                    <h3 className="font-serif text-xl font-bold">
-                      Planning jour par jour
-                    </h3>
-
-                    {itinerary.map((day, idx) => (
-                      <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.1 }}
-                        className="bg-card rounded-2xl overflow-hidden shadow-elegant"
-                      >
-                        <div className="flex flex-col md:flex-row">
-                          <div className="relative w-full md:w-48 h-48 md:h-auto shrink-0">
-                            <img
-                              src={day.image}
-                              alt={day.city}
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-r from-foreground/60 to-transparent md:bg-gradient-to-t" />
-                            <div className="absolute bottom-4 left-4 md:top-4">
-                              <div className="w-12 h-12 rounded-xl gradient-hero flex items-center justify-center font-bold text-white shadow-purple">
-                                J{day.day}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="p-6 flex-1">
-                            <div className="flex items-center gap-2 text-primary mb-3">
-                              <MapPin className="w-5 h-5" />
-                              <span className="font-semibold text-lg">{day.city}</span>
-                            </div>
-                            <ul className="space-y-2">
-                              {day.activities.map((activity, aIdx) => (
-                                <li
-                                  key={aIdx}
-                                  className="flex items-start gap-2 text-muted-foreground"
-                                >
-                                  <div className="w-1.5 h-1.5 rounded-full bg-accent mt-2 shrink-0" />
-                                  {activity}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex flex-col md:flex-row gap-4 justify-center">
-                    <Button
-                      onClick={() => {
-                        setStep(1);
-                        setItinerary(null);
-                      }}
-                      variant="outline"
-                      size="lg"
-                      className="gap-2"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                      Modifier mon voyage
-                    </Button>
-                    <Link to="/paiement">
-                      <Button variant="hero" size="xl" className="gap-2 w-full md:w-auto">
-                        Réserver maintenant
-                        <ArrowRight className="w-5 h-5" />
-                      </Button>
-                    </Link>
-                  </div>
+                  <ItineraryResult
+                    itinerary={itinerary}
+                    budget={selectedBudget}
+                    arrivalDate={arrivalDate}
+                    numberOfDays={numberOfDays}
+                    travelers={travelers}
+                    userName={user?.name || 'Voyageur'}
+                    onRestart={handleRestart}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
