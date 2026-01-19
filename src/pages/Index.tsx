@@ -1,20 +1,21 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import {
-  Sparkles,
-  MapPin,
-  Calendar,
-  ArrowRight,
-  Clock,
-  Flame,
-  TreePine,
-  Waves,
-  Landmark,
+import { 
+  Sparkles, 
+  MapPin, 
+  Calendar, 
+  ArrowRight, 
+  Star, 
+  Compass, 
+  TreePine, 
   Mountain,
-  Palette,
+  Waves,
+  Camera,
   Utensils,
-  Compass,
-  Plus,
+  Palette,
+  Clock,
+  Users,
+  ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroBenin from "@/assets/hero-benin.jpg";
@@ -24,143 +25,92 @@ import pendjariPark from "@/assets/pendjari-park.jpg";
 import ouidahDoor from "@/assets/ouidah-door.jpg";
 import cotonouCity from "@/assets/cotonou-city.jpg";
 
-// Régions du Bénin
-const regions = [
+const destinations = [
   {
-    name: "Sud du Bénin",
+    region: "Sud du Bénin",
+    name: "Cotonou & Ouidah",
     image: cotonouCity,
-    cities: ["Cotonou", "Porto-Novo", "Ouidah", "Grand-Popo"],
-    description: "Côte atlantique, histoire et vie urbaine",
-    color: "from-primary to-primary-dark",
+    description: "Plages, marchés animés et spiritualité vodoun",
+    highlights: ["Marchés", "Plages", "Culture"],
+    priceFrom: 35000,
   },
   {
-    name: "Centre du Bénin",
+    region: "Centre du Bénin",
+    name: "Abomey & Dassa",
     image: ouidahDoor,
-    cities: ["Abomey", "Bohicon", "Dassa-Zoumé"],
-    description: "Palais royaux, collines et spiritualité",
-    color: "from-accent to-accent-dark",
+    description: "Palais royaux UNESCO et collines sacrées",
+    highlights: ["Histoire", "Patrimoine", "Spirituel"],
+    priceFrom: 40000,
   },
   {
-    name: "Nord du Bénin",
+    region: "Nord du Bénin",
+    name: "Pendjari & Atacora",
     image: pendjariPark,
-    cities: ["Natitingou", "Parakou", "Tanguiéta"],
-    description: "Safari, montagnes et traditions Somba",
-    color: "from-nature to-nature/80",
+    description: "Safari, cascades et paysages grandioses",
+    highlights: ["Safari", "Nature", "Aventure"],
+    priceFrom: 75000,
   },
 ];
 
-// Expériences à vivre
 const experiences = [
   {
     title: "Cérémonie Vodoun",
-    category: "Culture & Traditions",
-    icon: Palette,
+    category: "Culture",
     image: festivalVodoun,
     price: 45000,
     duration: "4h",
     intensity: "Modéré",
+    icon: Palette,
   },
   {
-    title: "Atelier cuisine locale",
+    title: "Safari Pendjari",
+    category: "Nature",
+    image: pendjariPark,
+    price: 120000,
+    duration: "2 jours",
+    intensity: "Aventure",
+    icon: Camera,
+  },
+  {
+    title: "Cuisine béninoise",
     category: "Gastronomie",
-    icon: Utensils,
     image: ganvieVillage,
     price: 35000,
     duration: "3h",
     intensity: "Facile",
+    icon: Utensils,
   },
   {
-    title: "Safari Pendjari",
-    category: "Nature & Aventure",
-    icon: TreePine,
-    image: pendjariPark,
-    price: 120000,
-    duration: "2 jours",
-    intensity: "Intense",
-  },
-  {
-    title: "Artisanat bronze",
-    category: "Artisanat",
-    icon: Compass,
-    image: ouidahDoor,
-    price: 40000,
-    duration: "5h",
-    intensity: "Modéré",
-  },
-];
-
-// Activités populaires
-const activities = [
-  {
-    title: "Parcs nationaux",
-    icon: TreePine,
-    image: pendjariPark,
-    description: "Safari et faune sauvage africaine",
-  },
-  {
-    title: "Plages",
-    icon: Waves,
-    image: cotonouCity,
-    description: "Côte atlantique et lagunes",
-  },
-  {
-    title: "Sites historiques",
-    icon: Landmark,
-    image: ouidahDoor,
-    description: "Route des Esclaves, Palais Royaux",
-  },
-  {
-    title: "Randonnées",
-    icon: Mountain,
-    image: pendjariPark,
-    description: "Cascades et montagnes de l'Atacora",
-  },
-  {
-    title: "Villages lacustres",
-    icon: Compass,
+    title: "Village de Ganvié",
+    category: "Découverte",
     image: ganvieVillage,
-    description: "Ganvié, la Venise de l'Afrique",
-  },
-  {
-    title: "Découvertes culturelles",
-    icon: Palette,
-    image: festivalVodoun,
-    description: "Vodoun, masques Gélédé, traditions",
+    price: 30000,
+    duration: "5h",
+    intensity: "Facile",
+    icon: Compass,
   },
 ];
 
-// Festivals à venir
-const upcomingFestivals = [
-  {
-    name: "Festival du Vodoun",
-    date: "10 Janvier",
-    city: "Ouidah",
-    image: festivalVodoun,
-  },
-  {
-    name: "Festival Gélédé",
-    date: "Mars",
-    city: "Kétou",
-    image: festivalVodoun,
-  },
-  {
-    name: "FinAB",
-    date: "Avril",
-    city: "Cotonou",
-    image: festivalVodoun,
-  },
-  {
-    name: "WeLovEya",
-    date: "Août",
-    city: "Grand-Popo",
-    image: festivalVodoun,
-  },
+const activities = [
+  { icon: TreePine, title: "Parcs nationaux", desc: "Safari et faune sauvage", image: pendjariPark },
+  { icon: Waves, title: "Plages", desc: "Côte atlantique préservée", image: cotonouCity },
+  { icon: Mountain, title: "Randonnées", desc: "Montagnes de l'Atacora", image: pendjariPark },
+  { icon: Camera, title: "Sites historiques", desc: "Patrimoine UNESCO", image: ouidahDoor },
+  { icon: Palette, title: "Culture vodoun", desc: "Traditions ancestrales", image: festivalVodoun },
+  { icon: Utensils, title: "Gastronomie", desc: "Saveurs authentiques", image: ganvieVillage },
+];
+
+const festivals = [
+  { name: "Festival du Vodoun", date: "10 Janvier", city: "Ouidah", image: festivalVodoun },
+  { name: "Gélédé", date: "Mars", city: "Kétou", image: festivalVodoun },
+  { name: "FinAB", date: "Avril", city: "Cotonou", image: cotonouCity },
+  { name: "WeLovEya", date: "Août", city: "Grand-Popo", image: ganvieVillage },
 ];
 
 export default function Index() {
   return (
     <main className="overflow-hidden">
-      {/* 1️⃣ Hero Section - Immersive */}
+      {/* Hero Section - Full Immersive */}
       <section className="relative min-h-screen flex items-center justify-center">
         <div className="absolute inset-0">
           <img
@@ -168,16 +118,31 @@ export default function Index() {
             alt="Bénin paysage"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-foreground/70 via-foreground/40 to-primary/20" />
+          <div className="absolute inset-0 bg-gradient-to-b from-foreground/60 via-foreground/40 to-foreground/80" />
         </div>
 
-        <div className="relative z-10 container mx-auto px-4 pt-24">
-          <div className="max-w-4xl mx-auto text-center">
+        <div className="relative z-10 container mx-auto px-4 pt-20">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="max-w-4xl mx-auto text-center"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent/20 backdrop-blur-sm border border-accent/30 text-accent mb-8"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span className="text-sm font-medium">Voyage sur mesure au Bénin</span>
+            </motion.div>
+
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="font-serif text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight"
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="font-serif text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-6 leading-[1.1]"
             >
               Explore le{" "}
               <span className="text-gradient-gold">Bénin</span>
@@ -186,17 +151,16 @@ export default function Index() {
             <motion.p
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
               className="text-xl md:text-2xl text-white/90 mb-4 font-light"
             >
               Vis des expériences uniques.
             </motion.p>
-
             <motion.p
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-lg md:text-xl text-white/70 mb-10"
+              transition={{ duration: 0.8, delay: 0.5 }}
+              className="text-xl md:text-2xl text-white/90 mb-12 font-light"
             >
               Crée ton voyage sur mesure.
             </motion.p>
@@ -204,132 +168,132 @@ export default function Index() {
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
               <Link to="/destinations">
-                <Button variant="outline-light" size="xl" className="w-full sm:w-auto gap-2">
-                  <MapPin className="w-5 h-5" />
+                <Button variant="gold" size="xl" className="gap-2 w-full sm:w-auto">
+                  <Compass className="w-5 h-5" />
                   Découvrir les destinations
                 </Button>
               </Link>
               <Link to="/moteur">
-                <Button variant="hero" size="xl" className="gap-2 w-full sm:w-auto">
+                <Button variant="glass" size="xl" className="gap-2 w-full sm:w-auto">
                   <Sparkles className="w-5 h-5" />
                   Créer mon voyage
-                  <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
             </motion.div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Scroll indicator */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          transition={{ delay: 1.2 }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2"
         >
-          <div className="w-6 h-10 rounded-full border-2 border-white/30 flex items-start justify-center p-2">
-            <motion.div
-              animate={{ y: [0, 12, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              className="w-1.5 h-1.5 rounded-full bg-white"
-            />
-          </div>
+          <motion.div
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="flex flex-col items-center gap-2 text-white/60"
+          >
+            <span className="text-sm">Défiler</span>
+            <ChevronRight className="w-5 h-5 rotate-90" />
+          </motion.div>
         </motion.div>
       </section>
 
-      {/* 2️⃣ Destinations du Bénin - Par régions */}
+      {/* Destinations Section */}
+      <section className="py-24 bg-background">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex flex-col md:flex-row md:items-end justify-between mb-14"
+          >
+            <div>
+              <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+                Destinations
+              </span>
+              <h2 className="font-serif text-4xl md:text-5xl font-bold">
+                Régions du <span className="text-primary">Bénin</span>
+              </h2>
+            </div>
+            <Link to="/destinations" className="mt-6 md:mt-0">
+              <Button variant="outline" className="gap-2">
+                Toutes les destinations
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {destinations.map((dest, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.15 }}
+                className="group"
+              >
+                <div className="relative h-[420px] rounded-3xl overflow-hidden card-premium">
+                  <img
+                    src={dest.image}
+                    alt={dest.name}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-foreground via-foreground/20 to-transparent" />
+                  
+                  <div className="absolute top-5 left-5">
+                    <span className="px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-sm text-foreground text-sm font-medium">
+                      {dest.region}
+                    </span>
+                  </div>
+
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
+                    <h3 className="font-serif text-2xl font-bold text-white mb-2">
+                      {dest.name}
+                    </h3>
+                    <p className="text-white/80 text-sm mb-4">{dest.description}</p>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex gap-2">
+                        {dest.highlights.map((h, i) => (
+                          <span key={i} className="px-2 py-1 rounded-full bg-white/20 text-white text-xs">
+                            {h}
+                          </span>
+                        ))}
+                      </div>
+                      <span className="text-accent font-semibold">
+                        dès {dest.priceFrom.toLocaleString()} FCFA
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Experiences Section */}
       <section className="py-24 bg-secondary">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-14"
           >
-            <span className="text-primary font-medium text-sm uppercase tracking-wider">
-              Où aller ?
+            <span className="inline-block px-4 py-1.5 rounded-full bg-accent/20 text-accent-dark text-sm font-medium mb-4">
+              Expériences
             </span>
-            <h2 className="font-serif text-3xl md:text-5xl font-bold mt-3 mb-4">
-              Destinations du Bénin
-            </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Du littoral atlantique aux savanes du nord, chaque région offre une expérience unique.
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {regions.map((region, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                whileHover={{ y: -8 }}
-                className="group relative rounded-3xl overflow-hidden h-96 cursor-pointer"
-              >
-                <img
-                  src={region.image}
-                  alt={region.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className={`absolute inset-0 bg-gradient-to-t ${region.color} opacity-60`} />
-                <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-transparent to-transparent" />
-                
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <h3 className="font-serif text-2xl font-bold text-white mb-2">
-                    {region.name}
-                  </h3>
-                  <p className="text-white/80 text-sm mb-3">{region.description}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {region.cities.map((city, i) => (
-                      <span
-                        key={i}
-                        className="px-3 py-1 rounded-full text-xs bg-white/20 backdrop-blur-sm text-white"
-                      >
-                        {city}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mt-12"
-          >
-            <Link to="/destinations">
-              <Button variant="default" size="lg" className="gap-2">
-                Voir toutes les destinations
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* 3️⃣ Expériences à vivre */}
-      <section className="py-24">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <span className="text-primary font-medium text-sm uppercase tracking-wider">
-              Que vivre ?
-            </span>
-            <h2 className="font-serif text-3xl md:text-5xl font-bold mt-3 mb-4">
-              Expériences à vivre
+            <h2 className="font-serif text-4xl md:text-5xl font-bold mb-4">
+              Expériences à <span className="text-primary">vivre</span>
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Culture, artisanat, gastronomie, nature... Composez votre aventure béninoise.
@@ -344,8 +308,7 @@ export default function Index() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                whileHover={{ y: -6 }}
-                className="group bg-card rounded-2xl overflow-hidden shadow-elegant hover:shadow-lg transition-all border border-border"
+                className="group bg-card rounded-2xl overflow-hidden shadow-elegant hover:shadow-lg transition-all duration-300 hover:-translate-y-2"
               >
                 <div className="relative h-48 overflow-hidden">
                   <img
@@ -358,33 +321,31 @@ export default function Index() {
                       {exp.category}
                     </span>
                   </div>
+                  <div className="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center">
+                    <exp.icon className="w-5 h-5 text-primary" />
+                  </div>
                 </div>
 
                 <div className="p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <exp.icon className="w-5 h-5 text-primary" />
-                    <h3 className="font-serif text-lg font-semibold">
-                      {exp.title}
-                    </h3>
-                  </div>
+                  <h3 className="font-serif text-lg font-semibold mb-3">
+                    {exp.title}
+                  </h3>
 
-                  <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-3 mb-4 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
                       {exp.duration}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Flame className="w-4 h-4" />
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-nature/10 text-nature text-xs">
                       {exp.intensity}
-                    </div>
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <span className="text-lg font-bold text-primary">
                       {exp.price.toLocaleString()} FCFA
                     </span>
-                    <Button variant="gold" size="sm" className="gap-1">
-                      <Plus className="w-4 h-4" />
+                    <Button size="sm" variant="gold" className="gap-1">
                       Ajouter
                     </Button>
                   </div>
@@ -393,36 +354,31 @@ export default function Index() {
             ))}
           </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mt-12"
-          >
+          <div className="text-center mt-10">
             <Link to="/experiences">
               <Button variant="outline" size="lg" className="gap-2">
                 Voir toutes les expériences
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* 4️⃣ Que faire au Bénin */}
-      <section className="py-24 bg-secondary pattern-african">
+      {/* What to do Section */}
+      <section className="py-24 bg-background">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-14"
           >
-            <span className="text-primary font-medium text-sm uppercase tracking-wider">
+            <span className="inline-block px-4 py-1.5 rounded-full bg-nature/10 text-nature text-sm font-medium mb-4">
               Activités
             </span>
-            <h2 className="font-serif text-3xl md:text-5xl font-bold mt-3 mb-4">
-              Que faire au Bénin ?
+            <h2 className="font-serif text-4xl md:text-5xl font-bold">
+              Que faire au <span className="text-nature">Bénin</span> ?
             </h2>
           </motion.div>
 
@@ -433,9 +389,8 @@ export default function Index() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ delay: idx * 0.05 }}
-                whileHover={{ y: -4 }}
-                className="group relative rounded-2xl overflow-hidden h-52 cursor-pointer"
+                transition={{ delay: idx * 0.08 }}
+                className="group relative h-56 rounded-2xl overflow-hidden cursor-pointer"
               >
                 <img
                   src={activity.image}
@@ -444,16 +399,12 @@ export default function Index() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-foreground/40 to-transparent" />
                 
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-3 group-hover:bg-primary group-hover:scale-110 transition-all">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+                  <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-3 group-hover:bg-accent group-hover:scale-110 transition-all">
                     <activity.icon className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="font-semibold text-white text-sm mb-1">
-                    {activity.title}
-                  </h3>
-                  <p className="text-white/70 text-xs line-clamp-2">
-                    {activity.description}
-                  </p>
+                  <h3 className="font-semibold text-white text-sm mb-1">{activity.title}</h3>
+                  <p className="text-white/70 text-xs">{activity.desc}</p>
                 </div>
               </motion.div>
             ))}
@@ -461,78 +412,73 @@ export default function Index() {
         </div>
       </section>
 
-      {/* 5️⃣ Festivals & Événements */}
-      <section className="py-24 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src={festivalVodoun}
-            alt="Festival"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-foreground/80" />
-        </div>
-
+      {/* Festivals Section */}
+      <section className="py-24 bg-foreground text-white relative overflow-hidden">
+        <div className="absolute inset-0 pattern-african opacity-5" />
+        
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12 text-white"
+            className="flex flex-col md:flex-row md:items-end justify-between mb-14"
           >
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 text-accent text-sm mb-4">
-              <Calendar className="w-4 h-4" />
-              Événements culturels
-            </span>
-            <h2 className="font-serif text-3xl md:text-5xl font-bold mb-4">
-              Festivals & Événements
-            </h2>
-            <p className="text-white/70 max-w-xl mx-auto">
-              Synchronisez votre voyage avec les moments forts de la culture béninoise.
-            </p>
+            <div>
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/20 text-accent text-sm font-medium mb-4">
+                <Calendar className="w-4 h-4" />
+                Festivals
+              </span>
+              <h2 className="font-serif text-4xl md:text-5xl font-bold">
+                Festivals & <span className="text-accent">Événements</span>
+              </h2>
+            </div>
+            <Link to="/festivals" className="mt-6 md:mt-0">
+              <Button variant="outline-light" className="gap-2">
+                Calendrier complet
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
           </motion.div>
 
-          {/* Mini calendrier */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-12">
-            {upcomingFestivals.map((festival, idx) => (
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {festivals.map((festival, idx) => (
               <motion.div
                 key={idx}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                whileHover={{ y: -4 }}
-                className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10 text-white text-center cursor-pointer hover:bg-white/20 transition-all"
+                className="group relative h-64 rounded-2xl overflow-hidden"
               >
-                <div className="text-accent font-bold text-lg mb-1">
-                  {festival.date}
-                </div>
-                <h4 className="font-semibold text-sm mb-1">{festival.name}</h4>
-                <div className="flex items-center justify-center gap-1 text-white/60 text-xs">
-                  <MapPin className="w-3 h-3" />
-                  {festival.city}
+                <img
+                  src={festival.image}
+                  alt={festival.name}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-foreground via-foreground/40 to-transparent" />
+                
+                <div className="absolute bottom-0 left-0 right-0 p-5">
+                  <div className="flex items-center gap-2 text-accent text-sm mb-2">
+                    <Calendar className="w-4 h-4" />
+                    {festival.date}
+                  </div>
+                  <h3 className="font-serif text-lg font-bold text-white mb-1">
+                    {festival.name}
+                  </h3>
+                  <div className="flex items-center gap-1 text-white/70 text-sm">
+                    <MapPin className="w-4 h-4" />
+                    {festival.city}
+                  </div>
                 </div>
               </motion.div>
             ))}
           </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center"
-          >
-            <Link to="/festivals">
-              <Button variant="gold" size="xl" className="gap-2">
-                Voir le calendrier complet
-                <ArrowRight className="w-5 h-5" />
-              </Button>
-            </Link>
-          </motion.div>
         </div>
       </section>
 
-      {/* 6️⃣ Moteur Intelligent - MISE EN AVANT */}
-      <section className="py-24 bg-gradient-to-br from-primary via-primary-dark to-foreground text-white relative overflow-hidden">
+      {/* Moteur Intelligent CTA */}
+      <section className="py-24 relative overflow-hidden">
+        <div className="absolute inset-0 gradient-hero" />
         <div className="absolute inset-0 pattern-african opacity-10" />
         
         <div className="container mx-auto px-4 relative z-10">
@@ -540,49 +486,40 @@ export default function Index() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="max-w-3xl mx-auto text-center"
+            className="max-w-3xl mx-auto text-center text-white"
           >
             <motion.div
               animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-accent/20 mb-8"
+              transition={{ duration: 3, repeat: Infinity }}
+              className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-8"
             >
               <Sparkles className="w-10 h-10 text-accent" />
             </motion.div>
 
-            <h2 className="font-serif text-3xl md:text-5xl font-bold mb-6">
-              Dis-nous ce que tu aimes,
-              <span className="text-gradient-gold block mt-2">on crée ton voyage</span>
+            <h2 className="font-serif text-4xl md:text-6xl font-bold mb-6">
+              Dis-nous ce que tu aimes
             </h2>
-
-            <p className="text-white/80 text-lg mb-10 max-w-xl mx-auto">
-              Notre moteur intelligent analyse tes préférences et génère un itinéraire 
-              personnalisé avec les meilleures expériences du Bénin.
+            <p className="text-xl text-white/90 mb-10 font-light">
+              Notre moteur intelligent crée ton itinéraire parfait en quelques clics.
             </p>
 
             <Link to="/moteur">
-              <Button variant="gold" size="xl" className="gap-3 text-lg px-10 py-6">
+              <Button variant="gold" size="xl" className="gap-3 text-lg px-10">
                 <Sparkles className="w-6 h-6" />
                 Créer mon itinéraire personnalisé
                 <ArrowRight className="w-6 h-6" />
               </Button>
             </Link>
 
-            {/* Decorative elements */}
-            <div className="flex justify-center gap-8 mt-12">
-              {["Budget flexible", "Sur mesure", "Tout compris"].map((item, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 + 0.3 }}
-                  className="text-center"
-                >
-                  <div className="w-3 h-3 rounded-full bg-accent mx-auto mb-2" />
-                  <span className="text-white/70 text-sm">{item}</span>
-                </motion.div>
-              ))}
+            <div className="flex items-center justify-center gap-8 mt-12 text-white/80">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                <span>5000+ voyageurs</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-accent" />
+                <span>4.9/5 satisfaction</span>
+              </div>
             </div>
           </motion.div>
         </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Sparkles } from "lucide-react";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 const navLinks = [
   { path: "/", label: "Accueil" },
-  { path: "/decouvrir", label: "Découvrir le Bénin" },
+  { path: "/decouvrir", label: "Découvrir" },
   { path: "/destinations", label: "Destinations" },
   { path: "/experiences", label: "Expériences" },
   { path: "/festivals", label: "Festivals" },
@@ -15,20 +15,39 @@ const navLinks = [
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass-effect">
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled
+          ? "glass-effect shadow-elegant"
+          : "bg-transparent"
+      }`}
+    >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl gradient-hero flex items-center justify-center shadow-purple group-hover:scale-105 transition-transform">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-lg transition-all group-hover:scale-105 ${
+              isScrolled ? "gradient-hero" : "bg-white/20 backdrop-blur-sm"
+            }`}>
               <span className="text-white font-bold text-lg">4U</span>
             </div>
-            <span className="font-serif text-xl font-semibold text-foreground">
+            <span className={`font-serif text-xl font-semibold transition-colors ${
+              isScrolled ? "text-foreground" : "text-white"
+            }`}>
               4UBENIN
             </span>
           </Link>
@@ -41,8 +60,12 @@ export function Navbar() {
                 to={link.path}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
                   isActive(link.path)
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    ? isScrolled
+                      ? "bg-primary/10 text-primary"
+                      : "bg-white/20 text-white"
+                    : isScrolled
+                    ? "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    : "text-white/80 hover:text-white hover:bg-white/10"
                 }`}
               >
                 {link.label}
@@ -53,7 +76,11 @@ export function Navbar() {
           {/* CTA Button */}
           <div className="hidden lg:flex items-center gap-4">
             <Link to="/moteur">
-              <Button variant="hero" size="lg" className="gap-2">
+              <Button 
+                variant={isScrolled ? "hero" : "gold"} 
+                size="lg" 
+                className="gap-2"
+              >
                 <Sparkles className="w-4 h-4" />
                 Créer mon voyage
               </Button>
@@ -62,10 +89,16 @@ export function Navbar() {
 
           {/* Mobile Menu Button */}
           <button
-            className="lg:hidden p-2 rounded-lg hover:bg-secondary transition-colors"
+            className={`lg:hidden p-2 rounded-lg transition-colors ${
+              isScrolled ? "hover:bg-secondary" : "hover:bg-white/10"
+            }`}
             onClick={() => setIsOpen(!isOpen)}
           >
-            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isOpen ? (
+              <X className={`w-6 h-6 ${isScrolled ? "text-foreground" : "text-white"}`} />
+            ) : (
+              <Menu className={`w-6 h-6 ${isScrolled ? "text-foreground" : "text-white"}`} />
+            )}
           </button>
         </div>
       </div>
