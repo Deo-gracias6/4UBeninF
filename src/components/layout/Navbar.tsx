@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Sparkles } from "lucide-react";
+import { Menu, X, Sparkles, LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useUserAuth } from "@/contexts/UserAuthContext";
+import { UserMenu } from "./UserMenu";
 
 const navLinks = [
   { path: "/", label: "Accueil" },
@@ -17,6 +19,7 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const { isAuthenticated } = useUserAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -73,18 +76,60 @@ export function Navbar() {
             ))}
           </div>
 
-          {/* CTA Button */}
-          <div className="hidden lg:flex items-center gap-4">
-            <Link to="/moteur">
-              <Button 
-                variant={isScrolled ? "hero" : "gold"} 
-                size="lg" 
-                className="gap-2"
-              >
-                <Sparkles className="w-4 h-4" />
-                Créer mon voyage
-              </Button>
-            </Link>
+          {/* CTA Button & Auth */}
+          <div className="hidden lg:flex items-center gap-3">
+            {isAuthenticated ? (
+              <>
+                <Link to="/moteur">
+                  <Button 
+                    variant={isScrolled ? "hero" : "gold"} 
+                    size="lg" 
+                    className="gap-2"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Créer mon voyage
+                  </Button>
+                </Link>
+                <UserMenu isScrolled={isScrolled} />
+              </>
+            ) : (
+              <>
+                <Link to="/connexion">
+                  <Button 
+                    variant="ghost"
+                    className={`gap-2 ${
+                      isScrolled
+                        ? "text-foreground hover:bg-secondary"
+                        : "text-white hover:bg-white/10"
+                    }`}
+                  >
+                    <LogIn className="w-4 h-4" />
+                    Connexion
+                  </Button>
+                </Link>
+                <Link to="/inscription">
+                  <Button 
+                    variant={isScrolled ? "default" : "outline"}
+                    className={`gap-2 ${
+                      !isScrolled && "border-white/50 text-white hover:bg-white/10"
+                    }`}
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    Inscription
+                  </Button>
+                </Link>
+                <Link to="/moteur">
+                  <Button 
+                    variant={isScrolled ? "hero" : "gold"} 
+                    size="lg" 
+                    className="gap-2"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Créer mon voyage
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -127,6 +172,39 @@ export function Navbar() {
                   {link.label}
                 </Link>
               ))}
+              
+              <div className="border-t border-border my-2 pt-2">
+                {isAuthenticated ? (
+                  <>
+                    <Link to="/profil" onClick={() => setIsOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start mb-2">
+                        Mon profil
+                      </Button>
+                    </Link>
+                    <Link to="/notifications" onClick={() => setIsOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start mb-2">
+                        Notifications
+                      </Button>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/connexion" onClick={() => setIsOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start gap-2 mb-2">
+                        <LogIn className="w-4 h-4" />
+                        Connexion
+                      </Button>
+                    </Link>
+                    <Link to="/inscription" onClick={() => setIsOpen(false)}>
+                      <Button variant="outline" className="w-full justify-start gap-2 mb-2">
+                        <UserPlus className="w-4 h-4" />
+                        Inscription
+                      </Button>
+                    </Link>
+                  </>
+                )}
+              </div>
+              
               <Link to="/moteur" onClick={() => setIsOpen(false)}>
                 <Button variant="hero" size="lg" className="w-full mt-2 gap-2">
                   <Sparkles className="w-4 h-4" />

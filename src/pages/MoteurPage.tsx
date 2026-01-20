@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Check, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import DateSelector from '@/components/moteur/DateSelector';
 import InterestsSelector from '@/components/moteur/InterestsSelector';
 import AuthPrompt from '@/components/moteur/AuthPrompt';
 import ItineraryResult, { ItineraryDay } from '@/components/moteur/ItineraryResult';
-
+import { useUserAuth } from '@/contexts/UserAuthContext';
 import cotonouCity from '@/assets/cotonou-city.jpg';
 import ganvieVillage from '@/assets/ganvie-village.jpg';
 import pendjariPark from '@/assets/pendjari-park.jpg';
@@ -139,8 +139,6 @@ const generateMockItinerary = (days: number, budget: BudgetTier['id']): Itinerar
 
 type Step = 'budget' | 'dates' | 'interests' | 'auth' | 'generating' | 'result';
 
-const stepOrder: Step[] = ['budget', 'dates', 'interests', 'auth', 'generating', 'result'];
-
 const stepLabels: Record<Step, string> = {
   budget: 'Budget',
   dates: 'Dates',
@@ -151,6 +149,13 @@ const stepLabels: Record<Step, string> = {
 };
 
 export default function MoteurPage() {
+  const { isAuthenticated, user: authUser, addTrip } = useUserAuth();
+  
+  // Dynamic step order based on authentication status
+  const stepOrder: Step[] = isAuthenticated 
+    ? ['budget', 'dates', 'interests', 'generating', 'result']
+    : ['budget', 'dates', 'interests', 'auth', 'generating', 'result'];
+  
   const [currentStep, setCurrentStep] = useState<Step>('budget');
   const [selectedBudget, setSelectedBudget] = useState<BudgetTier | null>(null);
   const [arrivalDate, setArrivalDate] = useState<Date | undefined>(undefined);
@@ -158,10 +163,13 @@ export default function MoteurPage() {
   const [selectedInterests, setSelectedInterests] = useState<string[]>(['culture', 'nature']);
   const [travelType, setTravelType] = useState('couple');
   const [travelers, setTravelers] = useState(2);
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [localUser, setLocalUser] = useState<{ name: string; email: string } | null>(null);
   const [itinerary, setItinerary] = useState<ItineraryDay[] | null>(null);
 
   const currentStepIndex = stepOrder.indexOf(currentStep);
+
+  // Get the effective user (either from auth context or local state for visitors)
+  const effectiveUser = authUser ? { name: authUser.name, email: authUser.email } : localUser;
 
   const canProceed = () => {
     switch (currentStep) {
@@ -176,10 +184,44 @@ export default function MoteurPage() {
     }
   };
 
+  const startGeneration = () => {
+    setCurrentStep('generating');
+    
+    // Simulate AI generation
+    setTimeout(() => {
+      const generatedItinerary = generateMockItinerary(numberOfDays, selectedBudget!.id);
+      setItinerary(generatedItinerary);
+      
+      // If user is authenticated, save the trip
+      if (isAuthenticated && arrivalDate) {
+        const endDate = new Date(arrivalDate);
+        endDate.setDate(endDate.getDate() + numberOfDays);
+        
+        addTrip({
+          title: `Voyage au Bénin - ${numberOfDays} jours`,
+          startDate: arrivalDate,
+          endDate,
+          budget: selectedBudget!.id as 'economique' | 'premium' | 'vip',
+          destinations: generatedItinerary.map(day => day.city).filter((city, index, arr) => arr.indexOf(city) === index),
+          status: 'upcoming',
+        });
+      }
+      
+      setCurrentStep('result');
+    }, 3000);
+  };
+
   const goToNextStep = () => {
     const nextIndex = currentStepIndex + 1;
     if (nextIndex < stepOrder.length) {
-      setCurrentStep(stepOrder[nextIndex]);
+      const nextStep = stepOrder[nextIndex];
+      
+      // If authenticated and next step would be 'generating', start generation directly
+      if (nextStep === 'generating') {
+        startGeneration();
+      } else {
+        setCurrentStep(nextStep);
+      }
     }
   };
 
@@ -191,14 +233,8 @@ export default function MoteurPage() {
   };
 
   const handleAuthenticated = (authenticatedUser: { name: string; email: string }) => {
-    setUser(authenticatedUser);
-    setCurrentStep('generating');
-    
-    // Simulate AI generation
-    setTimeout(() => {
-      setItinerary(generateMockItinerary(numberOfDays, selectedBudget!.id));
-      setCurrentStep('result');
-    }, 3000);
+    setLocalUser(authenticatedUser);
+    startGeneration();
   };
 
   const handleRestart = () => {
@@ -209,10 +245,9 @@ export default function MoteurPage() {
     setSelectedInterests(['culture', 'nature']);
     setTravelType('couple');
     setTravelers(2);
-    setUser(null);
+    setLocalUser(null);
     setItinerary(null);
   };
-
   return (
     <main className="pt-20 min-h-screen">
       {/* Hero Section */}
@@ -457,7 +492,7 @@ export default function MoteurPage() {
                     arrivalDate={arrivalDate}
                     numberOfDays={numberOfDays}
                     travelers={travelers}
-                    userName={user?.name || 'Voyageur'}
+                    userName={effectiveUser?.name || 'Voyageur'}
                     onRestart={handleRestart}
                   />
                 </motion.div>
