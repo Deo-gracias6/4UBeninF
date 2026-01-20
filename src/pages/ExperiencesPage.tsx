@@ -1,13 +1,14 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
-import { Palette, Utensils, TreePine, Sparkles, Plus, Check } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Palette, Utensils, TreePine, Sparkles, Check, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ExperienceCard } from "@/components/cards/ExperienceCard";
 import festivalVodoun from "@/assets/festival-vodoun.jpg";
 import ganvieVillage from "@/assets/ganvie-village.jpg";
 import pendjariPark from "@/assets/pendjari-park.jpg";
 import ouidahDoor from "@/assets/ouidah-door.jpg";
-import { useToast } from "@/hooks/use-toast";
+import { useCart } from "@/contexts/CartContext";
+import { useState } from "react";
 
 const categories = [
   { id: "all", label: "Toutes", icon: Sparkles },
@@ -18,7 +19,7 @@ const categories = [
 
 const experiences = [
   {
-    id: 1,
+    id: "exp-1",
     title: "Cérémonie Vodoun authentique",
     category: "culture",
     categoryLabel: "Culture",
@@ -31,7 +32,7 @@ const experiences = [
     description: "Assistez à une cérémonie vodoun avec un prêtre local.",
   },
   {
-    id: 2,
+    id: "exp-2",
     title: "Cours de cuisine béninoise",
     category: "gastro",
     categoryLabel: "Gastronomie",
@@ -44,7 +45,7 @@ const experiences = [
     description: "Apprenez à préparer le fameux 'Amiwo' et autres plats locaux.",
   },
   {
-    id: 3,
+    id: "exp-3",
     title: "Safari photo à Pendjari",
     category: "nature",
     categoryLabel: "Nature",
@@ -57,7 +58,7 @@ const experiences = [
     description: "Partez à la rencontre des lions et éléphants d'Afrique.",
   },
   {
-    id: 4,
+    id: "exp-4",
     title: "Atelier bronze d'Abomey",
     category: "culture",
     categoryLabel: "Artisanat",
@@ -70,7 +71,7 @@ const experiences = [
     description: "Créez votre propre sculpture avec les maîtres artisans.",
   },
   {
-    id: 5,
+    id: "exp-5",
     title: "Dégustation de Sodabi",
     category: "gastro",
     categoryLabel: "Gastronomie",
@@ -83,7 +84,7 @@ const experiences = [
     description: "Découvrez l'alcool traditionnel du Bénin et ses secrets.",
   },
   {
-    id: 6,
+    id: "exp-6",
     title: "Randonnée cascades Tanougou",
     category: "nature",
     categoryLabel: "Nature",
@@ -96,7 +97,7 @@ const experiences = [
     description: "Trek vers les magnifiques chutes d'eau de l'Atacora.",
   },
   {
-    id: 7,
+    id: "exp-7",
     title: "Initiation aux Gélédé",
     category: "culture",
     categoryLabel: "Culture",
@@ -109,7 +110,7 @@ const experiences = [
     description: "Découvrez l'art des masques Gélédé, patrimoine UNESCO.",
   },
   {
-    id: 8,
+    id: "exp-8",
     title: "Pêche à Ganvié",
     category: "nature",
     categoryLabel: "Nature",
@@ -125,27 +126,23 @@ const experiences = [
 
 export default function ExperiencesPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [cart, setCart] = useState<number[]>([]);
-  const { toast } = useToast();
+  const { addItem, isInCart, totalPrice, itemCount } = useCart();
 
   const filteredExperiences = selectedCategory === "all"
     ? experiences
     : experiences.filter((exp) => exp.category === selectedCategory);
 
-  const addToCart = (id: number) => {
-    if (!cart.includes(id)) {
-      setCart([...cart, id]);
-      toast({
-        title: "Ajouté au voyage !",
-        description: "Cette expérience a été ajoutée à votre itinéraire.",
-      });
-    }
+  const handleAddToCart = (exp: typeof experiences[0]) => {
+    addItem({
+      id: exp.id,
+      type: "experience",
+      name: exp.title,
+      price: exp.price,
+      image: exp.image,
+      category: exp.categoryLabel,
+      duration: exp.duration,
+    });
   };
-
-  const totalPrice = cart.reduce((sum, id) => {
-    const exp = experiences.find((e) => e.id === id);
-    return sum + (exp?.price || 0);
-  }, 0);
 
   return (
     <main className="pt-20">
@@ -214,12 +211,13 @@ export default function ExperiencesPage() {
                   days={exp.days}
                   rating={exp.rating}
                   available={exp.available}
-                  onAdd={() => addToCart(exp.id)}
+                  onAdd={() => handleAddToCart(exp)}
+                  inCart={isInCart(exp.id)}
                 />
-                {cart.includes(exp.id) && (
+                {isInCart(exp.id) && (
                   <div className="mt-2 flex items-center gap-2 text-sm text-nature">
                     <Check className="w-4 h-4" />
-                    Ajouté à votre voyage
+                    Dans le panier
                   </div>
                 )}
               </motion.div>
@@ -228,23 +226,51 @@ export default function ExperiencesPage() {
         </div>
       </section>
 
+      {/* CTA Section */}
+      <section className="py-20 gradient-hero">
+        <div className="container mx-auto px-4 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <Sparkles className="w-12 h-12 mx-auto mb-6 text-accent" />
+            <h2 className="font-serif text-3xl md:text-4xl font-bold text-white mb-4">
+              Voyage sur mesure ?
+            </h2>
+            <p className="text-white/80 mb-8 max-w-xl mx-auto">
+              Notre moteur intelligent crée un itinéraire personnalisé
+              basé sur vos centres d'intérêt et votre budget.
+            </p>
+            <Link to="/moteur">
+              <Button variant="gold" size="xl" className="gap-2">
+                <Sparkles className="w-5 h-5" />
+                Créer mon voyage
+              </Button>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Floating Cart */}
-      {cart.length > 0 && (
+      {itemCount > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 100 }}
           animate={{ opacity: 1, y: 0 }}
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
         >
-          <div className="flex items-center gap-4 px-6 py-4 bg-foreground text-background rounded-2xl shadow-2xl">
-            <div>
-              <div className="text-sm opacity-80">{cart.length} expérience{cart.length > 1 ? "s" : ""}</div>
-              <div className="font-semibold">{totalPrice.toLocaleString()} FCFA</div>
+          <Link to="/panier">
+            <div className="flex items-center gap-4 px-6 py-4 bg-foreground text-background rounded-2xl shadow-2xl cursor-pointer hover:scale-105 transition-transform">
+              <div>
+                <div className="text-sm opacity-80">{itemCount} article{itemCount > 1 ? "s" : ""}</div>
+                <div className="font-semibold">{totalPrice.toLocaleString()} FCFA</div>
+              </div>
+              <Button variant="gold" size="lg" className="gap-2">
+                <ShoppingCart className="w-4 h-4" />
+                Voir le panier
+              </Button>
             </div>
-            <Button variant="gold" size="lg" className="gap-2">
-              <Plus className="w-4 h-4" />
-              Voir mon voyage
-            </Button>
-          </div>
+          </Link>
         </motion.div>
       )}
     </main>
