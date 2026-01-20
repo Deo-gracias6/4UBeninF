@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Clock, Users, Star, Plus } from "lucide-react";
+import { Clock, Users, Star, Plus, Check, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ExperienceCardProps {
@@ -12,6 +12,7 @@ interface ExperienceCardProps {
   rating: number;
   available: boolean;
   onAdd?: () => void;
+  inCart?: boolean;
 }
 
 export function ExperienceCard({
@@ -24,6 +25,7 @@ export function ExperienceCard({
   rating,
   available,
   onAdd,
+  inCart = false,
 }: ExperienceCardProps) {
   return (
     <motion.div
@@ -72,16 +74,28 @@ export function ExperienceCard({
               <span className="ml-2 text-xs text-destructive">Complet</span>
             )}
           </div>
-          <Button
-            onClick={onAdd}
-            variant="gold"
-            size="sm"
-            disabled={!available}
-            className="gap-1"
-          >
-            <Plus className="w-4 h-4" />
-            Ajouter
-          </Button>
+          {inCart ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled
+              className="gap-1 text-nature border-nature"
+            >
+              <Check className="w-4 h-4" />
+              Ajouté
+            </Button>
+          ) : (
+            <Button
+              onClick={onAdd}
+              variant="gold"
+              size="sm"
+              disabled={!available}
+              className="gap-1"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              Ajouter
+            </Button>
+          )}
         </div>
       </div>
     </motion.div>

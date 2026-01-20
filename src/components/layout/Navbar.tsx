@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Sparkles, LogIn, UserPlus } from "lucide-react";
+import { Menu, X, Sparkles, LogIn, UserPlus, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUserAuth } from "@/contexts/UserAuthContext";
+import { useCart } from "@/contexts/CartContext";
 import { UserMenu } from "./UserMenu";
 
 const navLinks = [
@@ -20,6 +21,11 @@ export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const { isAuthenticated } = useUserAuth();
+  const { itemCount, totalPrice } = useCart();
+
+  // Determine if this page has a dark hero (homepage only)
+  const isHomePage = location.pathname === "/";
+  const hasDarkHero = isHomePage;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -31,25 +37,28 @@ export function Navbar() {
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Determine text colors based on page and scroll state
+  const shouldUseLightText = hasDarkHero && !isScrolled;
+
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? "glass-effect shadow-elegant"
-          : "bg-transparent"
+          ? "bg-background/95 backdrop-blur-md shadow-elegant border-b border-border"
+          : hasDarkHero
+          ? "bg-transparent"
+          : "bg-background/80 backdrop-blur-sm"
       }`}
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-lg transition-all group-hover:scale-105 ${
-              isScrolled ? "gradient-hero" : "bg-white/20 backdrop-blur-sm"
-            }`}>
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-lg transition-all group-hover:scale-105 gradient-hero`}>
               <span className="text-white font-bold text-lg">4U</span>
             </div>
             <span className={`font-serif text-xl font-semibold transition-colors ${
-              isScrolled ? "text-foreground" : "text-white"
+              shouldUseLightText ? "text-white" : "text-foreground"
             }`}>
               4UBENIN
             </span>
@@ -63,12 +72,12 @@ export function Navbar() {
                 to={link.path}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
                   isActive(link.path)
-                    ? isScrolled
-                      ? "bg-primary/10 text-primary"
-                      : "bg-white/20 text-white"
-                    : isScrolled
-                    ? "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                    : "text-white/80 hover:text-white hover:bg-white/10"
+                    ? shouldUseLightText
+                      ? "bg-white/20 text-white"
+                      : "bg-primary/10 text-primary"
+                    : shouldUseLightText
+                    ? "text-white/80 hover:text-white hover:bg-white/10"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                 }`}
               >
                 {link.label}
@@ -76,13 +85,33 @@ export function Navbar() {
             ))}
           </div>
 
-          {/* CTA Button & Auth */}
+          {/* CTA Button, Cart & Auth */}
           <div className="hidden lg:flex items-center gap-3">
+            {/* Cart Icon */}
+            {itemCount > 0 && (
+              <Link to="/panier">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`relative gap-2 ${
+                    shouldUseLightText
+                      ? "text-white hover:bg-white/10"
+                      : "text-foreground hover:bg-secondary"
+                  }`}
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-accent text-white text-xs flex items-center justify-center font-medium">
+                    {itemCount}
+                  </span>
+                </Button>
+              </Link>
+            )}
+
             {isAuthenticated ? (
               <>
                 <Link to="/moteur">
                   <Button 
-                    variant={isScrolled ? "hero" : "gold"} 
+                    variant={shouldUseLightText ? "gold" : "hero"} 
                     size="lg" 
                     className="gap-2"
                   >
@@ -90,7 +119,7 @@ export function Navbar() {
                     Créer mon voyage
                   </Button>
                 </Link>
-                <UserMenu isScrolled={isScrolled} />
+                <UserMenu isScrolled={!shouldUseLightText} />
               </>
             ) : (
               <>
@@ -98,9 +127,9 @@ export function Navbar() {
                   <Button 
                     variant="ghost"
                     className={`gap-2 ${
-                      isScrolled
-                        ? "text-foreground hover:bg-secondary"
-                        : "text-white hover:bg-white/10"
+                      shouldUseLightText
+                        ? "text-white hover:bg-white/10"
+                        : "text-foreground hover:bg-secondary"
                     }`}
                   >
                     <LogIn className="w-4 h-4" />
@@ -109,9 +138,9 @@ export function Navbar() {
                 </Link>
                 <Link to="/inscription">
                   <Button 
-                    variant={isScrolled ? "default" : "outline"}
+                    variant={shouldUseLightText ? "outline" : "default"}
                     className={`gap-2 ${
-                      !isScrolled && "border-white/50 text-white hover:bg-white/10"
+                      shouldUseLightText && "border-white/50 text-white hover:bg-white/10"
                     }`}
                   >
                     <UserPlus className="w-4 h-4" />
@@ -120,7 +149,7 @@ export function Navbar() {
                 </Link>
                 <Link to="/moteur">
                   <Button 
-                    variant={isScrolled ? "hero" : "gold"} 
+                    variant={shouldUseLightText ? "gold" : "hero"} 
                     size="lg" 
                     className="gap-2"
                   >
@@ -133,18 +162,36 @@ export function Navbar() {
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            className={`lg:hidden p-2 rounded-lg transition-colors ${
-              isScrolled ? "hover:bg-secondary" : "hover:bg-white/10"
-            }`}
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            {isOpen ? (
-              <X className={`w-6 h-6 ${isScrolled ? "text-foreground" : "text-white"}`} />
-            ) : (
-              <Menu className={`w-6 h-6 ${isScrolled ? "text-foreground" : "text-white"}`} />
+          <div className="lg:hidden flex items-center gap-2">
+            {itemCount > 0 && (
+              <Link to="/panier">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`relative ${
+                    shouldUseLightText ? "text-white" : "text-foreground"
+                  }`}
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-accent text-white text-xs flex items-center justify-center font-medium">
+                    {itemCount}
+                  </span>
+                </Button>
+              </Link>
             )}
-          </button>
+            <button
+              className={`p-2 rounded-lg transition-colors ${
+                shouldUseLightText ? "hover:bg-white/10" : "hover:bg-secondary"
+              }`}
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              {isOpen ? (
+                <X className={`w-6 h-6 ${shouldUseLightText ? "text-white" : "text-foreground"}`} />
+              ) : (
+                <Menu className={`w-6 h-6 ${shouldUseLightText ? "text-white" : "text-foreground"}`} />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -186,6 +233,14 @@ export function Navbar() {
                         Notifications
                       </Button>
                     </Link>
+                    {itemCount > 0 && (
+                      <Link to="/panier" onClick={() => setIsOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start mb-2 gap-2">
+                          <ShoppingCart className="w-4 h-4" />
+                          Panier ({itemCount})
+                        </Button>
+                      </Link>
+                    )}
                   </>
                 ) : (
                   <>
@@ -201,6 +256,14 @@ export function Navbar() {
                         Inscription
                       </Button>
                     </Link>
+                    {itemCount > 0 && (
+                      <Link to="/panier" onClick={() => setIsOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start mb-2 gap-2">
+                          <ShoppingCart className="w-4 h-4" />
+                          Panier ({itemCount})
+                        </Button>
+                      </Link>
+                    )}
                   </>
                 )}
               </div>

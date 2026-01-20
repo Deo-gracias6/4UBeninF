@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Calendar, MapPin, Clock, Plus } from "lucide-react";
+import { Calendar, MapPin, Clock, ShoppingCart, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface FestivalCardProps {
@@ -10,6 +10,7 @@ interface FestivalCardProps {
   price: number;
   duration: string;
   onAdd?: () => void;
+  inCart?: boolean;
 }
 
 export function FestivalCard({
@@ -20,6 +21,7 @@ export function FestivalCard({
   price,
   duration,
   onAdd,
+  inCart = false,
 }: FestivalCardProps) {
   return (
     <motion.div
@@ -61,10 +63,17 @@ export function FestivalCard({
           </span>
         </div>
 
-        <Button onClick={onAdd} variant="hero" className="w-full gap-2">
-          <Plus className="w-4 h-4" />
-          Intégrer au voyage
-        </Button>
+        {inCart ? (
+          <Button variant="outline" className="w-full gap-2 text-nature border-nature" disabled>
+            <Check className="w-4 h-4" />
+            Dans le panier
+          </Button>
+        ) : (
+          <Button onClick={onAdd} variant="hero" className="w-full gap-2">
+            <ShoppingCart className="w-4 h-4" />
+            Ajouter au panier
+          </Button>
+        )}
       </div>
     </motion.div>
   );

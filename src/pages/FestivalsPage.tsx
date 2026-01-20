@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar as CalendarIcon, MapPin, Clock, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Sparkles, ShoppingCart, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FestivalCard } from "@/components/cards/FestivalCard";
 import festivalVodoun from "@/assets/festival-vodoun.jpg";
-import { useToast } from "@/hooks/use-toast";
+import { useCart } from "@/contexts/CartContext";
 
 const festivals = [
   {
-    id: 1,
+    id: "fest-1",
     name: "Festival du Vodoun",
     dates: "10 Janvier",
     month: 0,
@@ -19,7 +20,7 @@ const festivals = [
     description: "La plus grande célébration du vodoun au monde. Cérémonies, danses et rituels ancestraux.",
   },
   {
-    id: 2,
+    id: "fest-2",
     name: "Festival des Masques Gélédé",
     dates: "Mars",
     month: 2,
@@ -30,7 +31,7 @@ const festivals = [
     description: "Patrimoine immatériel UNESCO. Spectacle de masques et de danses traditionnelles.",
   },
   {
-    id: 3,
+    id: "fest-3",
     name: "FinAB - Festival International des Arts du Bénin",
     dates: "Avril",
     month: 3,
@@ -41,7 +42,7 @@ const festivals = [
     description: "Le plus grand festival artistique du pays. Musique, danse, théâtre et arts visuels.",
   },
   {
-    id: 4,
+    id: "fest-4",
     name: "WeLovEya",
     dates: "Août",
     month: 7,
@@ -52,7 +53,7 @@ const festivals = [
     description: "Festival de musique électronique sur la plage. Rencontre entre traditions et modernité.",
   },
   {
-    id: 5,
+    id: "fest-5",
     name: "Festival Quintessence",
     dates: "Décembre",
     month: 11,
@@ -63,7 +64,7 @@ const festivals = [
     description: "Arts de la scène, théâtre et performances. Une vitrine de la créativité béninoise.",
   },
   {
-    id: 6,
+    id: "fest-6",
     name: "Fête des Religions Endogènes",
     dates: "Août",
     month: 7,
@@ -82,21 +83,23 @@ const months = [
 
 export default function FestivalsPage() {
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
-  const [cart, setCart] = useState<number[]>([]);
-  const { toast } = useToast();
+  const { addItem, isInCart, totalPrice, itemCount } = useCart();
 
   const filteredFestivals = selectedMonth !== null
     ? festivals.filter((f) => f.month === selectedMonth)
     : festivals;
 
-  const addToCart = (id: number) => {
-    if (!cart.includes(id)) {
-      setCart([...cart, id]);
-      toast({
-        title: "Festival ajouté !",
-        description: "Ce festival a été intégré à votre voyage.",
-      });
-    }
+  const handleAddToCart = (festival: typeof festivals[0]) => {
+    addItem({
+      id: festival.id,
+      type: "festival",
+      name: festival.name,
+      price: festival.price,
+      image: festival.image,
+      dates: festival.dates,
+      city: festival.city,
+      duration: festival.duration,
+    });
   };
 
   // Group festivals by month for calendar view
@@ -224,11 +227,18 @@ export default function FestivalsPage() {
                   city={festival.city}
                   price={festival.price}
                   duration={festival.duration}
-                  onAdd={() => addToCart(festival.id)}
+                  onAdd={() => handleAddToCart(festival)}
+                  inCart={isInCart(festival.id)}
                 />
                 <p className="text-muted-foreground text-sm mt-3 px-1">
                   {festival.description}
                 </p>
+                {isInCart(festival.id) && (
+                  <div className="mt-2 flex items-center gap-2 text-sm text-nature">
+                    <Check className="w-4 h-4" />
+                    Dans le panier
+                  </div>
+                )}
               </motion.div>
             ))}
           </div>
@@ -251,21 +261,45 @@ export default function FestivalsPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <CalendarIcon className="w-12 h-12 mx-auto mb-6 text-accent" />
+            <Sparkles className="w-12 h-12 mx-auto mb-6 text-accent" />
             <h2 className="font-serif text-3xl md:text-4xl font-bold text-white mb-4">
               Planifiez autour des festivals
             </h2>
             <p className="text-white/80 mb-8 max-w-xl mx-auto">
               Notre moteur intelligent intègre automatiquement les festivals 
-              dans votre itinéraire.
+              dans votre itinéraire personnalisé.
             </p>
-            <Button variant="gold" size="xl" className="gap-2">
-              Créer mon voyage
-              <ChevronRight className="w-5 h-5" />
-            </Button>
+            <Link to="/moteur">
+              <Button variant="gold" size="xl" className="gap-2">
+                <Sparkles className="w-5 h-5" />
+                Créer mon voyage
+              </Button>
+            </Link>
           </motion.div>
         </div>
       </section>
+
+      {/* Floating Cart */}
+      {itemCount > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
+        >
+          <Link to="/panier">
+            <div className="flex items-center gap-4 px-6 py-4 bg-foreground text-background rounded-2xl shadow-2xl cursor-pointer hover:scale-105 transition-transform">
+              <div>
+                <div className="text-sm opacity-80">{itemCount} article{itemCount > 1 ? "s" : ""}</div>
+                <div className="font-semibold">{totalPrice.toLocaleString()} FCFA</div>
+              </div>
+              <Button variant="gold" size="lg" className="gap-2">
+                <ShoppingCart className="w-4 h-4" />
+                Voir le panier
+              </Button>
+            </div>
+          </Link>
+        </motion.div>
+      )}
     </main>
   );
 }
