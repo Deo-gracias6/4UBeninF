@@ -18,7 +18,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import heroBenin from "@/assets/hero-benin.jpg";
+import HeroCarousel from "@/components/home/HeroCarousel";
 import festivalVodoun from "@/assets/festival-vodoun.jpg";
 import ganvieVillage from "@/assets/ganvie-village.jpg";
 import pendjariPark from "@/assets/pendjari-park.jpg";
@@ -110,100 +110,8 @@ const festivals = [
 export default function Index() {
   return (
     <main className="overflow-hidden">
-      {/* Hero Section - Full Immersive */}
-      <section className="relative min-h-screen flex items-center justify-center">
-        <div className="absolute inset-0">
-          <img
-            src={heroBenin}
-            alt="Bénin paysage"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-foreground/60 via-foreground/40 to-foreground/80" />
-        </div>
-
-        <div className="relative z-10 container mx-auto px-4 pt-20">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-4xl mx-auto text-center"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent/20 backdrop-blur-sm border border-accent/30 text-accent mb-8"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span className="text-sm font-medium">Voyage sur mesure au Bénin</span>
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="font-serif text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-6 leading-[1.1]"
-            >
-              Explore le{" "}
-              <span className="text-gradient-gold">Bénin</span>
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-xl md:text-2xl text-white/90 mb-4 font-light"
-            >
-              Vis des expériences uniques.
-            </motion.p>
-            <motion.p
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.5 }}
-              className="text-xl md:text-2xl text-white/90 mb-12 font-light"
-            >
-              Crée ton voyage sur mesure.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
-            >
-              <Link to="/destinations">
-                <Button variant="gold" size="xl" className="gap-2 w-full sm:w-auto">
-                  <Compass className="w-5 h-5" />
-                  Découvrir les destinations
-                </Button>
-              </Link>
-              <Link to="/moteur">
-                <Button variant="glass" size="xl" className="gap-2 w-full sm:w-auto">
-                  <Sparkles className="w-5 h-5" />
-                  Créer mon voyage
-                </Button>
-              </Link>
-            </motion.div>
-          </motion.div>
-        </div>
-
-        {/* Scroll indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2"
-        >
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="flex flex-col items-center gap-2 text-white/60"
-          >
-            <span className="text-sm">Défiler</span>
-            <ChevronRight className="w-5 h-5 rotate-90" />
-          </motion.div>
-        </motion.div>
-      </section>
+      {/* Hero Section - Full Immersive Carousel */}
+      <HeroCarousel />
 
       {/* Destinations Section */}
       <section className="py-24 bg-background">
