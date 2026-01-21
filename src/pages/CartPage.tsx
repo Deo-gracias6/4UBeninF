@@ -206,6 +206,12 @@ function CartItemCard({
   onRemove: (id: string) => void;
   index: number;
 }) {
+  const packBadgeColors = {
+    standard: "bg-slate-500",
+    premium: "bg-accent",
+    vip: "bg-primary",
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -222,13 +228,24 @@ function CartItemCard({
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <span
-              className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white mb-2 ${
-                typeColors[item.type]
-              }`}
-            >
-              {typeLabels[item.type]}
-            </span>
+            <div className="flex items-center gap-2 mb-2">
+              <span
+                className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white ${
+                  typeColors[item.type]
+                }`}
+              >
+                {typeLabels[item.type]}
+              </span>
+              {item.packType && item.packName && (
+                <span
+                  className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white ${
+                    packBadgeColors[item.packType]
+                  }`}
+                >
+                  Pack {item.packName}
+                </span>
+              )}
+            </div>
             <h3 className="font-semibold line-clamp-1">{item.name}</h3>
             {item.type === "festival" && item.city && item.dates && (
               <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
@@ -240,7 +257,14 @@ function CartItemCard({
                 </span>
               </div>
             )}
-            {item.duration && (
+            {item.packFeatures && item.packFeatures.length > 0 && (
+              <div className="mt-2 text-xs text-muted-foreground">
+                <span className="font-medium">Inclus : </span>
+                {item.packFeatures.slice(0, 3).join(" • ")}
+                {item.packFeatures.length > 3 && ` +${item.packFeatures.length - 3}`}
+              </div>
+            )}
+            {item.duration && !item.packType && (
               <p className="text-sm text-muted-foreground mt-1">{item.duration}</p>
             )}
           </div>
