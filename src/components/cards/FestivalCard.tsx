@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Calendar, MapPin, Clock, ShoppingCart, Check } from "lucide-react";
+import { Calendar, MapPin, Clock, Sparkles, Check, Ticket, Star, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface FestivalCardProps {
@@ -7,10 +7,9 @@ interface FestivalCardProps {
   name: string;
   dates: string;
   city: string;
-  price: number;
   duration: string;
-  onAdd?: () => void;
-  inCart?: boolean;
+  onChoosePack?: () => void;
+  hasPackInCart?: boolean;
 }
 
 export function FestivalCard({
@@ -18,10 +17,9 @@ export function FestivalCard({
   name,
   dates,
   city,
-  price,
   duration,
-  onAdd,
-  inCart = false,
+  onChoosePack,
+  hasPackInCart = false,
 }: FestivalCardProps) {
   return (
     <motion.div
@@ -58,20 +56,34 @@ export function FestivalCard({
             <Clock className="w-4 h-4" />
             {duration}
           </div>
-          <span className="text-lg font-bold text-primary">
-            {price.toLocaleString()} FCFA
-          </span>
+          {/* Pack icons preview */}
+          <div className="flex items-center gap-1">
+            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center" title="Standard">
+              <Ticket className="w-3 h-3 text-muted-foreground" />
+            </div>
+            <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center" title="Premium">
+              <Star className="w-3 h-3 text-accent" />
+            </div>
+            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center" title="VIP">
+              <Crown className="w-3 h-3 text-primary" />
+            </div>
+          </div>
         </div>
 
-        {inCart ? (
+        <div className="text-center mb-4">
+          <span className="text-xs text-muted-foreground">À partir de</span>
+          <div className="text-lg font-bold text-primary">75 000 FCFA</div>
+        </div>
+
+        {hasPackInCart ? (
           <Button variant="outline" className="w-full gap-2 text-nature border-nature" disabled>
             <Check className="w-4 h-4" />
-            Dans le panier
+            Pack dans le panier
           </Button>
         ) : (
-          <Button onClick={onAdd} variant="hero" className="w-full gap-2">
-            <ShoppingCart className="w-4 h-4" />
-            Ajouter au panier
+          <Button onClick={onChoosePack} variant="hero" className="w-full gap-2">
+            <Sparkles className="w-4 h-4" />
+            Choisir mon pack
           </Button>
         )}
       </div>

@@ -4,6 +4,7 @@ import { differenceInDays, parse } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export type CartItemType = "experience" | "festival" | "discovery" | "activity";
+export type PackType = "standard" | "premium" | "vip";
 
 export interface CartItem {
   id: string;
@@ -15,6 +16,10 @@ export interface CartItem {
   dates?: string;
   city?: string;
   duration?: string;
+  // Pack-specific fields (for festivals)
+  packType?: PackType;
+  packName?: string;
+  packFeatures?: string[];
   // Experience-specific fields
   category?: string;
 }
@@ -47,12 +52,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     setItems((prev) => [...prev, item]);
 
-    // Special notification for festivals
+    // Special notification for festivals with pack info
     if (item.type === "festival" && item.dates && item.city) {
       const daysRemaining = calculateDaysRemaining(item.dates);
+      const packLabel = item.packName ? ` – Pack ${item.packName}` : "";
       toast({
-        title: "🎉 Festival ajouté au panier !",
-        description: `${item.name} - ${item.city}\n📅 ${item.dates}\n⏳ ${daysRemaining > 0 ? `Dans ${daysRemaining} jours` : "Bientôt !"}`,
+        title: `🎉 Pack Festival ajouté !`,
+        description: `${item.name}${packLabel}\n📍 ${item.city} • 📅 ${item.dates}\n⏳ ${daysRemaining > 0 ? `Dans ${daysRemaining} jours` : "Bientôt !"}`,
       });
     } else {
       toast({

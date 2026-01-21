@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Sparkles, ShoppingCart, Check } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, Sparkles, ShoppingCart, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FestivalCard } from "@/components/cards/FestivalCard";
+import { FestivalPackModal, FestivalPack, packs } from "@/components/festivals/FestivalPackModal";
 import festivalVodoun from "@/assets/festival-vodoun.jpg";
 import { useCart } from "@/contexts/CartContext";
 
@@ -15,7 +16,6 @@ const festivals = [
     month: 0,
     city: "Ouidah",
     image: festivalVodoun,
-    price: 75000,
     duration: "3 jours",
     description: "La plus grande célébration du vodoun au monde. Cérémonies, danses et rituels ancestraux.",
   },
@@ -26,7 +26,6 @@ const festivals = [
     month: 2,
     city: "Kétou",
     image: festivalVodoun,
-    price: 55000,
     duration: "2 jours",
     description: "Patrimoine immatériel UNESCO. Spectacle de masques et de danses traditionnelles.",
   },
@@ -37,7 +36,6 @@ const festivals = [
     month: 3,
     city: "Cotonou",
     image: festivalVodoun,
-    price: 45000,
     duration: "5 jours",
     description: "Le plus grand festival artistique du pays. Musique, danse, théâtre et arts visuels.",
   },
@@ -48,7 +46,6 @@ const festivals = [
     month: 7,
     city: "Grand-Popo",
     image: festivalVodoun,
-    price: 60000,
     duration: "3 jours",
     description: "Festival de musique électronique sur la plage. Rencontre entre traditions et modernité.",
   },
@@ -59,7 +56,6 @@ const festivals = [
     month: 11,
     city: "Ouidah",
     image: festivalVodoun,
-    price: 50000,
     duration: "4 jours",
     description: "Arts de la scène, théâtre et performances. Une vitrine de la créativité béninoise.",
   },
@@ -70,7 +66,6 @@ const festivals = [
     month: 7,
     city: "Covè",
     image: festivalVodoun,
-    price: 40000,
     duration: "2 jours",
     description: "Célébration des traditions spirituelles locales avec cérémonies et rituels.",
   },
@@ -81,24 +76,36 @@ const months = [
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
 ];
 
+type Festival = typeof festivals[0];
+
 export default function FestivalsPage() {
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
+  const [selectedFestival, setSelectedFestival] = useState<Festival | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { addItem, isInCart, totalPrice, itemCount } = useCart();
 
   const filteredFestivals = selectedMonth !== null
     ? festivals.filter((f) => f.month === selectedMonth)
     : festivals;
 
-  const handleAddToCart = (festival: typeof festivals[0]) => {
+  const handleOpenPackModal = (festival: Festival) => {
+    setSelectedFestival(festival);
+    setIsModalOpen(true);
+  };
+
+  const handleSelectPack = (festival: Festival, pack: FestivalPack) => {
     addItem({
-      id: festival.id,
+      id: `${festival.id}-${pack.type}`,
       type: "festival",
       name: festival.name,
-      price: festival.price,
+      price: pack.price,
       image: festival.image,
       dates: festival.dates,
       city: festival.city,
       duration: festival.duration,
+      packType: pack.type,
+      packName: pack.name,
+      packFeatures: pack.features,
     });
   };
 
@@ -225,20 +232,17 @@ export default function FestivalsPage() {
                   name={festival.name}
                   dates={festival.dates}
                   city={festival.city}
-                  price={festival.price}
                   duration={festival.duration}
-                  onAdd={() => handleAddToCart(festival)}
-                  inCart={isInCart(festival.id)}
+                  onChoosePack={() => handleOpenPackModal(festival)}
+                  hasPackInCart={
+                    isInCart(`${festival.id}-standard`) ||
+                    isInCart(`${festival.id}-premium`) ||
+                    isInCart(`${festival.id}-vip`)
+                  }
                 />
                 <p className="text-muted-foreground text-sm mt-3 px-1">
                   {festival.description}
                 </p>
-                {isInCart(festival.id) && (
-                  <div className="mt-2 flex items-center gap-2 text-sm text-nature">
-                    <Check className="w-4 h-4" />
-                    Dans le panier
-                  </div>
-                )}
               </motion.div>
             ))}
           </div>
@@ -279,27 +283,13 @@ export default function FestivalsPage() {
         </div>
       </section>
 
-      {/* Floating Cart */}
-      {itemCount > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 100 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
-        >
-          <Link to="/panier">
-            <div className="flex items-center gap-4 px-6 py-4 bg-foreground text-background rounded-2xl shadow-2xl cursor-pointer hover:scale-105 transition-transform">
-              <div>
-                <div className="text-sm opacity-80">{itemCount} article{itemCount > 1 ? "s" : ""}</div>
-                <div className="font-semibold">{totalPrice.toLocaleString()} FCFA</div>
-              </div>
-              <Button variant="gold" size="lg" className="gap-2">
-                <ShoppingCart className="w-4 h-4" />
-                Voir le panier
-              </Button>
-            </div>
-          </Link>
-        </motion.div>
-      )}
+      {/* Festival Pack Modal */}
+      <FestivalPackModal
+        festival={selectedFestival}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSelectPack={handleSelectPack}
+      />
     </main>
   );
 }
