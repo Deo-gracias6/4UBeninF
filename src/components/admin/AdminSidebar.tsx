@@ -9,6 +9,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Users,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 const menuItems = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/admin/users', label: 'Utilisateurs', icon: Users },
   { path: '/admin/destinations', label: 'Destinations', icon: MapPin },
   { path: '/admin/experiences', label: 'Expériences', icon: Sparkles },
   { path: '/admin/festivals', label: 'Festivals', icon: Calendar },

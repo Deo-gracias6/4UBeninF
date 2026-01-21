@@ -26,6 +26,7 @@ import NotificationsPage from "./pages/NotificationsPage";
 import NotFound from "./pages/NotFound";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminDestinationsPage from "./pages/admin/AdminDestinationsPage";
 import AdminExperiencesPage from "./pages/admin/AdminExperiencesPage";
 import AdminFestivalsPage from "./pages/admin/AdminFestivalsPage";
@@ -48,6 +49,7 @@ const App = () => (
                 <Route path="/admin/login" element={<AdminLoginPage />} />
                 <Route path="/admin" element={<AdminLayout />}>
                   <Route index element={<AdminDashboardPage />} />
+                  <Route path="users" element={<AdminUsersPage />} />
                   <Route path="destinations" element={<AdminDestinationsPage />} />
                   <Route path="experiences" element={<AdminExperiencesPage />} />
                   <Route path="festivals" element={<AdminFestivalsPage />} />
