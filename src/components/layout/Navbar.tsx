@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Sparkles, LogIn, UserPlus, ShoppingCart } from "lucide-react";
+import { Menu, X, Sparkles, LogIn, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUserAuth } from "@/contexts/UserAuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -107,57 +107,32 @@ export function Navbar() {
               </Link>
             )}
 
+            <Link to="/moteur">
+              <Button 
+                variant={shouldUseLightText ? "gold" : "hero"} 
+                size="default" 
+                className="gap-1.5 text-sm px-4 py-2"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Créer mon voyage
+              </Button>
+            </Link>
+
             {isAuthenticated ? (
-              <>
-                <Link to="/moteur">
-                  <Button 
-                    variant={shouldUseLightText ? "gold" : "hero"} 
-                    size="lg" 
-                    className="gap-2"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    Créer mon voyage
-                  </Button>
-                </Link>
-                <UserMenu isScrolled={!shouldUseLightText} />
-              </>
+              <UserMenu isScrolled={!shouldUseLightText} />
             ) : (
-              <>
-                <Link to="/connexion">
-                  <Button 
-                    variant="ghost"
-                    className={`gap-2 ${
-                      shouldUseLightText
-                        ? "text-white hover:bg-white/10"
-                        : "text-foreground hover:bg-secondary"
-                    }`}
-                  >
-                    <LogIn className="w-4 h-4" />
-                    Connexion
-                  </Button>
-                </Link>
-                <Link to="/inscription">
-                  <Button 
-                    variant={shouldUseLightText ? "outline" : "default"}
-                    className={`gap-2 ${
-                      shouldUseLightText && "border-white/50 text-white hover:bg-white/10"
-                    }`}
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    Inscription
-                  </Button>
-                </Link>
-                <Link to="/moteur">
-                  <Button 
-                    variant={shouldUseLightText ? "gold" : "hero"} 
-                    size="lg" 
-                    className="gap-2"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    Créer mon voyage
-                  </Button>
-                </Link>
-              </>
+              <Link to="/connexion">
+                <Button 
+                  variant={shouldUseLightText ? "outline" : "default"}
+                  size="sm"
+                  className={`gap-1.5 ${
+                    shouldUseLightText && "border-white/50 text-white hover:bg-white/10"
+                  }`}
+                >
+                  <LogIn className="w-4 h-4" />
+                  Login
+                </Button>
+              </Link>
             )}
           </div>
 
@@ -247,13 +222,7 @@ export function Navbar() {
                     <Link to="/connexion" onClick={() => setIsOpen(false)}>
                       <Button variant="ghost" className="w-full justify-start gap-2 mb-2">
                         <LogIn className="w-4 h-4" />
-                        Connexion
-                      </Button>
-                    </Link>
-                    <Link to="/inscription" onClick={() => setIsOpen(false)}>
-                      <Button variant="outline" className="w-full justify-start gap-2 mb-2">
-                        <UserPlus className="w-4 h-4" />
-                        Inscription
+                        Login
                       </Button>
                     </Link>
                     {itemCount > 0 && (
@@ -269,8 +238,8 @@ export function Navbar() {
               </div>
               
               <Link to="/moteur" onClick={() => setIsOpen(false)}>
-                <Button variant="hero" size="lg" className="w-full mt-2 gap-2">
-                  <Sparkles className="w-4 h-4" />
+                <Button variant="hero" size="default" className="w-full mt-2 gap-1.5 text-sm">
+                  <Sparkles className="w-3.5 h-3.5" />
                   Créer mon voyage
                 </Button>
               </Link>
