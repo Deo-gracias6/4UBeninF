@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
-import { Clock, Users, Star, Plus, Check, ShoppingCart } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Clock, Users, Star, Check, ShoppingCart, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ExperienceCardProps {
+  id: string;
   image: string;
   title: string;
   category: string;
@@ -13,9 +15,11 @@ interface ExperienceCardProps {
   available: boolean;
   onAdd?: () => void;
   inCart?: boolean;
+  showDetailsLink?: boolean;
 }
 
 export function ExperienceCard({
+  id,
   image,
   title,
   category,
@@ -26,6 +30,7 @@ export function ExperienceCard({
   available,
   onAdd,
   inCart = false,
+  showDetailsLink = true,
 }: ExperienceCardProps) {
   return (
     <motion.div
@@ -65,7 +70,7 @@ export function ExperienceCard({
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <span className="text-lg font-bold text-primary">
               {price.toLocaleString()} FCFA
@@ -74,12 +79,24 @@ export function ExperienceCard({
               <span className="ml-2 text-xs text-destructive">Complet</span>
             )}
           </div>
+        </div>
+
+        <div className="flex gap-2">
+          {showDetailsLink && (
+            <Link to={`/experiences/${id}`} className="flex-1">
+              <Button variant="outline" size="sm" className="w-full gap-1">
+                <Eye className="w-4 h-4" />
+                Détails
+              </Button>
+            </Link>
+          )}
+          
           {inCart ? (
             <Button
               variant="outline"
               size="sm"
               disabled
-              className="gap-1 text-nature border-nature"
+              className="flex-1 gap-1 text-nature border-nature"
             >
               <Check className="w-4 h-4" />
               Ajouté
@@ -90,7 +107,7 @@ export function ExperienceCard({
               variant="gold"
               size="sm"
               disabled={!available}
-              className="gap-1"
+              className="flex-1 gap-1"
             >
               <ShoppingCart className="w-4 h-4" />
               Ajouter

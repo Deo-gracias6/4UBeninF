@@ -14,7 +14,9 @@ import DiscoverPage from "./pages/DiscoverPage";
 import CityDetailPage from "./pages/CityDetailPage";
 import DestinationsPage from "./pages/DestinationsPage";
 import ExperiencesPage from "./pages/ExperiencesPage";
+import ExperienceDetailPage from "./pages/ExperienceDetailPage";
 import FestivalsPage from "./pages/FestivalsPage";
+import FestivalDetailPage from "./pages/FestivalDetailPage";
 import MoteurPage from "./pages/MoteurPage";
 import PaymentPage from "./pages/PaymentPage";
 import CartPage from "./pages/CartPage";
@@ -77,7 +79,9 @@ const App = () => (
                         <Route path="/decouvrir/:cityId" element={<CityDetailPage />} />
                         <Route path="/destinations" element={<DestinationsPage />} />
                         <Route path="/experiences" element={<ExperiencesPage />} />
+                        <Route path="/experiences/:id" element={<ExperienceDetailPage />} />
                         <Route path="/festivals" element={<FestivalsPage />} />
+                        <Route path="/festivals/:id" element={<FestivalDetailPage />} />
                         <Route path="/moteur" element={<MoteurPage />} />
                         <Route path="/paiement" element={<PaymentPage />} />
                         <Route path="/panier" element={<CartPage />} />
