@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   Sparkles, 
   MapPin, 
@@ -15,10 +15,12 @@ import {
   Palette,
   Clock,
   Users,
-  ChevronRight
+  ShoppingCart,
+  Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HeroCarousel from "@/components/home/HeroCarousel";
+import { useCart } from "@/contexts/CartContext";
 import festivalVodoun from "@/assets/festival-vodoun.jpg";
 import ganvieVillage from "@/assets/ganvie-village.jpg";
 import pendjariPark from "@/assets/pendjari-park.jpg";
@@ -92,22 +94,54 @@ const experiences = [
 ];
 
 const activities = [
-  { icon: TreePine, title: "Parcs nationaux", desc: "Safari et faune sauvage", image: pendjariPark },
-  { icon: Waves, title: "Plages", desc: "Côte atlantique préservée", image: cotonouCity },
-  { icon: Mountain, title: "Randonnées", desc: "Montagnes de l'Atacora", image: pendjariPark },
-  { icon: Camera, title: "Sites historiques", desc: "Patrimoine UNESCO", image: ouidahDoor },
-  { icon: Palette, title: "Culture vodoun", desc: "Traditions ancestrales", image: festivalVodoun },
-  { icon: Utensils, title: "Gastronomie", desc: "Saveurs authentiques", image: ganvieVillage },
+  { id: "act-1", icon: TreePine, title: "Parcs nationaux", desc: "Safari et faune sauvage", image: pendjariPark, price: 55000 },
+  { id: "act-2", icon: Waves, title: "Plages", desc: "Côte atlantique préservée", image: cotonouCity, price: 25000 },
+  { id: "act-3", icon: Mountain, title: "Randonnées", desc: "Montagnes de l'Atacora", image: pendjariPark, price: 40000 },
+  { id: "act-4", icon: Camera, title: "Sites historiques", desc: "Patrimoine UNESCO", image: ouidahDoor, price: 30000 },
+  { id: "act-5", icon: Palette, title: "Culture vodoun", desc: "Traditions ancestrales", image: festivalVodoun, price: 45000 },
+  { id: "act-6", icon: Utensils, title: "Gastronomie", desc: "Saveurs authentiques", image: ganvieVillage, price: 35000 },
 ];
 
 const festivals = [
-  { name: "Festival du Vodoun", date: "10 Janvier", city: "Ouidah", image: festivalVodoun },
-  { name: "Gélédé", date: "Mars", city: "Kétou", image: festivalVodoun },
-  { name: "FinAB", date: "Avril", city: "Cotonou", image: cotonouCity },
-  { name: "WeLovEya", date: "Août", city: "Grand-Popo", image: ganvieVillage },
+  { id: "fest-1", name: "Festival du Vodoun", date: "10 Janvier", city: "Ouidah", image: festivalVodoun, price: 75000 },
+  { id: "fest-2", name: "Gélédé", date: "Mars", city: "Kétou", image: festivalVodoun, price: 65000 },
+  { id: "fest-3", name: "FinAB", date: "Avril", city: "Cotonou", image: cotonouCity, price: 50000 },
+  { id: "fest-4", name: "WeLovEya", date: "Août", city: "Grand-Popo", image: ganvieVillage, price: 55000 },
 ];
 
 export default function Index() {
+  const navigate = useNavigate();
+  const { addItem, isInCart } = useCart();
+
+  const handleQuickAdd = (item: {
+    id: string;
+    type: "experience" | "activity" | "festival" | "discovery";
+    name: string;
+    price: number;
+    image?: string;
+    category?: string;
+    dates?: string;
+    city?: string;
+  }) => {
+    if (isInCart(item.id)) {
+      navigate("/panier");
+      return;
+    }
+    
+    addItem({
+      id: item.id,
+      type: item.type,
+      name: item.name,
+      price: item.price,
+      image: item.image,
+      category: item.category,
+      dates: item.dates,
+      city: item.city,
+    });
+    
+    navigate("/panier");
+  };
+
   return (
     <main className="overflow-hidden">
       {/* Hero Section - Full Immersive Carousel */}
@@ -253,8 +287,30 @@ export default function Index() {
                     <span className="text-lg font-bold text-primary">
                       {exp.price.toLocaleString()} FCFA
                     </span>
-                    <Button size="sm" variant="gold" className="gap-1">
-                      Ajouter
+                    <Button 
+                      size="sm" 
+                      variant={isInCart(`exp-home-${idx}`) ? "outline" : "gold"} 
+                      className="gap-1"
+                      onClick={() => handleQuickAdd({
+                        id: `exp-home-${idx}`,
+                        type: "experience",
+                        name: exp.title,
+                        price: exp.price,
+                        image: exp.image,
+                        category: exp.category,
+                      })}
+                    >
+                      {isInCart(`exp-home-${idx}`) ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Ajouté
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingCart className="w-4 h-4" />
+                          Ajouter
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -312,7 +368,37 @@ export default function Index() {
                     <activity.icon className="w-6 h-6 text-white" />
                   </div>
                   <h3 className="font-semibold text-white text-sm mb-1">{activity.title}</h3>
-                  <p className="text-white/70 text-xs">{activity.desc}</p>
+                  <p className="text-white/70 text-xs mb-1">{activity.desc}</p>
+                  <span className="text-accent font-semibold text-sm mb-2">
+                    {activity.price.toLocaleString()} FCFA
+                  </span>
+                  <Button 
+                    size="sm" 
+                    variant={isInCart(activity.id) ? "outline" : "gold"} 
+                    className="gap-1 text-xs px-3 py-1 h-7"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleQuickAdd({
+                        id: activity.id,
+                        type: "activity",
+                        name: activity.title,
+                        price: activity.price,
+                        image: activity.image,
+                      });
+                    }}
+                  >
+                    {isInCart(activity.id) ? (
+                      <>
+                        <Check className="w-3 h-3" />
+                        Ajouté
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="w-3 h-3" />
+                        Ajouter
+                      </>
+                    )}
+                  </Button>
                 </div>
               </motion.div>
             ))}
@@ -373,10 +459,44 @@ export default function Index() {
                   <h3 className="font-serif text-lg font-bold text-white mb-1">
                     {festival.name}
                   </h3>
-                  <div className="flex items-center gap-1 text-white/70 text-sm">
-                    <MapPin className="w-4 h-4" />
-                    {festival.city}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1 text-white/70 text-sm">
+                      <MapPin className="w-4 h-4" />
+                      {festival.city}
+                    </div>
+                    <span className="text-accent font-semibold text-sm">
+                      {festival.price.toLocaleString()} FCFA
+                    </span>
                   </div>
+                  <Button 
+                    size="sm" 
+                    variant={isInCart(festival.id) ? "outline" : "gold"} 
+                    className="w-full mt-3 gap-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleQuickAdd({
+                        id: festival.id,
+                        type: "festival",
+                        name: festival.name,
+                        price: festival.price,
+                        image: festival.image,
+                        dates: festival.date,
+                        city: festival.city,
+                      });
+                    }}
+                  >
+                    {isInCart(festival.id) ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Ajouté
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="w-4 h-4" />
+                        Ajouter
+                      </>
+                    )}
+                  </Button>
                 </div>
               </motion.div>
             ))}
