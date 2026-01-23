@@ -228,6 +228,7 @@ export default function FestivalsPage() {
                 transition={{ delay: idx * 0.1 }}
               >
                 <FestivalCard
+                  id={festival.id}
                   image={festival.image}
                   name={festival.name}
                   dates={festival.dates}

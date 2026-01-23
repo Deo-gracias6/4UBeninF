@@ -203,6 +203,7 @@ export default function ExperiencesPage() {
                 transition={{ delay: idx * 0.05 }}
               >
                 <ExperienceCard
+                  id={exp.id}
                   image={exp.image}
                   title={exp.title}
                   category={exp.categoryLabel}

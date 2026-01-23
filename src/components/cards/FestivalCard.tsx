@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
-import { Calendar, MapPin, Clock, Sparkles, Check, Ticket, Star, Crown } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Calendar, MapPin, Clock, Sparkles, Check, Ticket, Star, Crown, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface FestivalCardProps {
+  id: string;
   image: string;
   name: string;
   dates: string;
@@ -10,9 +12,11 @@ interface FestivalCardProps {
   duration: string;
   onChoosePack?: () => void;
   hasPackInCart?: boolean;
+  showDetailsLink?: boolean;
 }
 
 export function FestivalCard({
+  id,
   image,
   name,
   dates,
@@ -20,6 +24,7 @@ export function FestivalCard({
   duration,
   onChoosePack,
   hasPackInCart = false,
+  showDetailsLink = true,
 }: FestivalCardProps) {
   return (
     <motion.div
@@ -75,17 +80,28 @@ export function FestivalCard({
           <div className="text-lg font-bold text-primary">75 000 FCFA</div>
         </div>
 
-        {hasPackInCart ? (
-          <Button variant="outline" className="w-full gap-2 text-nature border-nature" disabled>
-            <Check className="w-4 h-4" />
-            Pack dans le panier
-          </Button>
-        ) : (
-          <Button onClick={onChoosePack} variant="hero" className="w-full gap-2">
-            <Sparkles className="w-4 h-4" />
-            Choisir mon pack
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {showDetailsLink && (
+            <Link to={`/festivals/${id}`} className="flex-1">
+              <Button variant="outline" size="sm" className="w-full gap-1">
+                <Eye className="w-4 h-4" />
+                Détails
+              </Button>
+            </Link>
+          )}
+
+          {hasPackInCart ? (
+            <Button variant="outline" className="flex-1 gap-2 text-nature border-nature" disabled>
+              <Check className="w-4 h-4" />
+              Ajouté
+            </Button>
+          ) : (
+            <Button onClick={onChoosePack} variant="hero" className="flex-1 gap-2">
+              <Sparkles className="w-4 h-4" />
+              Pack
+            </Button>
+          )}
+        </div>
       </div>
     </motion.div>
   );
