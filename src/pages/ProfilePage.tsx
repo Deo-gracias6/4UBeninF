@@ -15,6 +15,7 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
+  Bell,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +27,8 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { NotificationSettings } from '@/components/notifications/NotificationSettings';
+import { UpcomingReminders } from '@/components/notifications/UpcomingReminders';
 
 const budgetLabels = {
   economique: { label: 'Économique', color: 'bg-nature/10 text-nature' },
@@ -227,7 +230,7 @@ export default function ProfilePage() {
 
             {/* Trips Section */}
             <Tabs defaultValue="upcoming" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
                 <TabsTrigger value="upcoming" className="gap-2">
                   <Plane className="w-4 h-4" />
                   À venir ({upcomingTrips.length})
@@ -235,6 +238,10 @@ export default function ProfilePage() {
                 <TabsTrigger value="history" className="gap-2">
                   <Clock className="w-4 h-4" />
                   Historique ({pastTrips.length})
+                </TabsTrigger>
+                <TabsTrigger value="notifications" className="gap-2">
+                  <Bell className="w-4 h-4" />
+                  Rappels
                 </TabsTrigger>
               </TabsList>
 
@@ -275,6 +282,13 @@ export default function ProfilePage() {
                     </p>
                   </div>
                 )}
+              </TabsContent>
+
+              <TabsContent value="notifications">
+                <div className="space-y-6">
+                  <NotificationSettings />
+                  <UpcomingReminders />
+                </div>
               </TabsContent>
             </Tabs>
           </motion.div>
