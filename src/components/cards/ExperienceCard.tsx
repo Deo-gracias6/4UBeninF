@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Clock, Users, Star, Check, ShoppingCart, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { WishlistButton } from "./WishlistButton";
 
 interface ExperienceCardProps {
   id: string;
@@ -16,6 +17,7 @@ interface ExperienceCardProps {
   onAdd?: () => void;
   inCart?: boolean;
   showDetailsLink?: boolean;
+  location?: string;
 }
 
 export function ExperienceCard({
@@ -31,6 +33,7 @@ export function ExperienceCard({
   onAdd,
   inCart = false,
   showDetailsLink = true,
+  location,
 }: ExperienceCardProps) {
   return (
     <motion.div
@@ -48,9 +51,24 @@ export function ExperienceCard({
             {category}
           </span>
         </div>
-        <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-white/90 backdrop-blur-sm">
-          <Star className="w-3 h-3 fill-accent text-accent" />
-          <span className="text-xs font-semibold">{rating}</span>
+        <div className="absolute top-3 right-3 flex items-center gap-2">
+          <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/90 backdrop-blur-sm">
+            <Star className="w-3 h-3 fill-accent text-accent" />
+            <span className="text-xs font-semibold">{rating}</span>
+          </div>
+          <WishlistButton
+            item={{
+              id,
+              type: "experience",
+              name: title,
+              image,
+              price,
+              category,
+              location,
+              rating,
+            }}
+            size="sm"
+          />
         </div>
       </div>
 

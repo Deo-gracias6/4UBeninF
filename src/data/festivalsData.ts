@@ -14,6 +14,8 @@ export interface Festival {
   description: string;
   fullDescription: string;
   culturalContext: string;
+  rating: number;
+  reviewsCount: number;
   program: {
     day: string;
     events: string[];
@@ -29,7 +31,7 @@ export interface Festival {
 
 export const festivals: Festival[] = [
   {
-    id: "fest-1",
+    id: "vodoun-fest",
     name: "Festival du Vodoun",
     dates: "10 Janvier",
     month: 0,
@@ -37,6 +39,8 @@ export const festivals: Festival[] = [
     image: festivalVodoun,
     images: [festivalVodoun, ganvieVillage],
     duration: "3 jours",
+    rating: 4.9,
+    reviewsCount: 156,
     description: "La plus grande célébration du vodoun au monde. Cérémonies, danses et rituels ancestraux.",
     fullDescription: "Le 10 janvier, fête nationale du vodoun au Bénin, Ouidah devient le centre mondial de cette spiritualité ancestrale. Des milliers de fidèles et de curieux convergent vers la capitale spirituelle du vodoun pour assister à des cérémonies exceptionnelles. Prêtres, adeptes et dignitaires se rassemblent sur la plage de Ouidah pour des rituels colorés mêlant transes, danses et offrandes aux divinités.",
     culturalContext: "Le vodoun, né dans l'ancien royaume du Dahomey, est reconnu comme religion officielle au Bénin depuis 1996. Le 10 janvier, jour férié, célèbre cette tradition spirituelle qui a traversé les océans avec les esclaves pour donner naissance au vaudou haïtien et aux cultes afro-brésiliens. Ouidah, dernière étape des esclaves avant leur départ, est chargée d'une histoire intense que le festival permet de commémorer.",
@@ -79,7 +83,7 @@ export const festivals: Festival[] = [
     highlights: ["Cérémonies authentiques", "Rencontre avec les prêtres", "Patrimoine UNESCO", "Ambiance unique"]
   },
   {
-    id: "fest-2",
+    id: "gelede-fest",
     name: "Festival des Masques Gélédé",
     dates: "Mars",
     month: 2,
@@ -87,6 +91,8 @@ export const festivals: Festival[] = [
     image: festivalVodoun,
     images: [festivalVodoun, ganvieVillage],
     duration: "2 jours",
+    rating: 4.7,
+    reviewsCount: 89,
     description: "Patrimoine immatériel UNESCO. Spectacle de masques et de danses traditionnelles.",
     fullDescription: "Le Festival des Masques Gélédé est l'une des expressions culturelles les plus spectaculaires du Bénin. Classé chef-d'œuvre du patrimoine oral et immatériel de l'humanité par l'UNESCO, le Gélédé célèbre le pouvoir des mères et le rôle des femmes dans la société Yoruba. Les danseurs masqués, habillés de costumes colorés, exécutent des chorégraphies transmises depuis des générations.",
     culturalContext: "Le Gélédé est né de la vénération d'Iyá Nlá, la 'Grande Mère' primordiale. Cette tradition honore le pouvoir mystique des femmes et transmet des messages sociaux à travers des satires et des récits. Chaque masque sculpté raconte une histoire : animaux, personnages de la vie quotidienne, scènes humoristiques ou moralisatrices.",
@@ -120,7 +126,7 @@ export const festivals: Festival[] = [
     highlights: ["Patrimoine UNESCO", "Masques sculptés uniques", "Danses spectaculaires", "Art ancestral vivant"]
   },
   {
-    id: "fest-3",
+    id: "finab-fest",
     name: "FinAB - Festival International des Arts du Bénin",
     dates: "Avril",
     month: 3,
@@ -128,6 +134,8 @@ export const festivals: Festival[] = [
     image: cotonouCity,
     images: [cotonouCity, festivalVodoun],
     duration: "5 jours",
+    rating: 4.8,
+    reviewsCount: 112,
     description: "Le plus grand festival artistique du pays. Musique, danse, théâtre et arts visuels.",
     fullDescription: "Le Festival International des Arts du Bénin (FinAB) est le rendez-vous incontournable de la création artistique africaine. Pendant cinq jours, Cotonou vibre au rythme des concerts, expositions, performances théâtrales et ateliers. Des artistes du monde entier se retrouvent pour célébrer la diversité culturelle et l'innovation artistique du continent africain.",
     culturalContext: "Créé pour promouvoir les arts contemporains africains, le FinAB est devenu une plateforme majeure pour les artistes émergents et confirmés. Le festival reflète la vitalité de la scène artistique béninoise, entre traditions séculaires et créations avant-gardistes. C'est aussi un espace de dialogue interculturel et de networking pour les professionnels de la culture.",
@@ -170,7 +178,7 @@ export const festivals: Festival[] = [
     highlights: ["Artistes internationaux", "Diversité artistique", "Ambiance festive", "Networking culturel"]
   },
   {
-    id: "fest-4",
+    id: "welobeya-fest",
     name: "WeLovEya",
     dates: "Août",
     month: 7,
@@ -178,6 +186,8 @@ export const festivals: Festival[] = [
     image: ganvieVillage,
     images: [ganvieVillage, cotonouCity],
     duration: "3 jours",
+    rating: 4.6,
+    reviewsCount: 78,
     description: "Festival de musique électronique sur la plage. Rencontre entre traditions et modernité.",
     fullDescription: "WeLovEya est le festival qui fait danser l'Afrique de l'Ouest ! Sur les plages paradisiaques de Grand-Popo, DJs internationaux et artistes locaux fusionnent musiques électroniques et rythmes traditionnels béninois. Trois jours de fête, de découvertes musicales et de rencontres dans un cadre idyllique entre océan et lagune.",
     culturalContext: "Né de la volonté de créer un événement musical d'envergure internationale au Bénin, WeLovEya incarne la modernité africaine. Le festival valorise les artistes locaux tout en invitant des têtes d'affiche mondiales. C'est un lieu de fusion où l'afrobeat rencontre la house, où les percussions traditionnelles se mêlent aux beats électroniques.",
@@ -220,7 +230,7 @@ export const festivals: Festival[] = [
     highlights: ["Plage paradisiaque", "Line-up international", "Fusion musicale", "Ambiance unique"]
   },
   {
-    id: "fest-5",
+    id: "quintessence-fest",
     name: "Festival Quintessence",
     dates: "Décembre",
     month: 11,
@@ -228,6 +238,8 @@ export const festivals: Festival[] = [
     image: festivalVodoun,
     images: [festivalVodoun, cotonouCity],
     duration: "4 jours",
+    rating: 4.5,
+    reviewsCount: 64,
     description: "Arts de la scène, théâtre et performances. Une vitrine de la créativité béninoise.",
     fullDescription: "Le Festival Quintessence est l'événement phare des arts de la scène au Bénin. Théâtre, danse contemporaine, performances, installations... Pendant quatre jours, Ouidah devient un laboratoire artistique à ciel ouvert. Le festival met en avant les créateurs béninois et africains qui repoussent les frontières de l'expression artistique.",
     culturalContext: "Quintessence est né de la volonté de faire de Ouidah un pôle culturel majeur en Afrique. Au-delà des cérémonies vodoun pour lesquelles la ville est connue, le festival révèle une autre facette : celle d'une ville tournée vers la création contemporaine, où l'histoire dialogue avec l'innovation artistique.",
@@ -261,7 +273,7 @@ export const festivals: Festival[] = [
     highlights: ["Création contemporaine", "Artistes émergents", "Cadre historique unique", "Rencontres artistiques"]
   },
   {
-    id: "fest-6",
+    id: "religions-fest",
     name: "Fête des Religions Endogènes",
     dates: "Août",
     month: 7,
@@ -269,6 +281,8 @@ export const festivals: Festival[] = [
     image: festivalVodoun,
     images: [festivalVodoun, ganvieVillage],
     duration: "2 jours",
+    rating: 4.8,
+    reviewsCount: 42,
     description: "Célébration des traditions spirituelles locales avec cérémonies et rituels.",
     fullDescription: "La Fête des Religions Endogènes de Covè est une célébration authentique des traditions spirituelles béninoises. Loin des circuits touristiques, cette fête permet d'assister à des cérémonies rituelles dans leur forme la plus pure. Les communautés locales se rassemblent pour honorer les ancêtres et les divinités protectrices à travers des rituels transmis depuis des générations.",
     culturalContext: "Covè est un haut lieu du vodoun au Bénin. La fête célèbre les 'religions endogènes', terme désignant les spiritualités traditionnelles africaines par opposition aux religions importées. C'est un moment de fierté culturelle où les communautés réaffirment leur attachement à leurs racines spirituelles.",

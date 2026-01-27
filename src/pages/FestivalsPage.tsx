@@ -1,75 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Calendar as CalendarIcon, ChevronLeft, Sparkles, ShoppingCart, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FestivalCard } from "@/components/cards/FestivalCard";
 import { FestivalPackModal, FestivalPack, packs } from "@/components/festivals/FestivalPackModal";
-import festivalVodoun from "@/assets/festival-vodoun.jpg";
+import { AdvancedFilters, FilterState } from "@/components/filters/AdvancedFilters";
+import { festivals } from "@/data/festivalsData";
 import { useCart } from "@/contexts/CartContext";
-
-const festivals = [
-  {
-    id: "fest-1",
-    name: "Festival du Vodoun",
-    dates: "10 Janvier",
-    month: 0,
-    city: "Ouidah",
-    image: festivalVodoun,
-    duration: "3 jours",
-    description: "La plus grande célébration du vodoun au monde. Cérémonies, danses et rituels ancestraux.",
-  },
-  {
-    id: "fest-2",
-    name: "Festival des Masques Gélédé",
-    dates: "Mars",
-    month: 2,
-    city: "Kétou",
-    image: festivalVodoun,
-    duration: "2 jours",
-    description: "Patrimoine immatériel UNESCO. Spectacle de masques et de danses traditionnelles.",
-  },
-  {
-    id: "fest-3",
-    name: "FinAB - Festival International des Arts du Bénin",
-    dates: "Avril",
-    month: 3,
-    city: "Cotonou",
-    image: festivalVodoun,
-    duration: "5 jours",
-    description: "Le plus grand festival artistique du pays. Musique, danse, théâtre et arts visuels.",
-  },
-  {
-    id: "fest-4",
-    name: "WeLovEya",
-    dates: "Août",
-    month: 7,
-    city: "Grand-Popo",
-    image: festivalVodoun,
-    duration: "3 jours",
-    description: "Festival de musique électronique sur la plage. Rencontre entre traditions et modernité.",
-  },
-  {
-    id: "fest-5",
-    name: "Festival Quintessence",
-    dates: "Décembre",
-    month: 11,
-    city: "Ouidah",
-    image: festivalVodoun,
-    duration: "4 jours",
-    description: "Arts de la scène, théâtre et performances. Une vitrine de la créativité béninoise.",
-  },
-  {
-    id: "fest-6",
-    name: "Fête des Religions Endogènes",
-    dates: "Août",
-    month: 7,
-    city: "Covè",
-    image: festivalVodoun,
-    duration: "2 jours",
-    description: "Célébration des traditions spirituelles locales avec cérémonies et rituels.",
-  },
-];
 
 const months = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
@@ -82,11 +20,41 @@ export default function FestivalsPage() {
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [selectedFestival, setSelectedFestival] = useState<Festival | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    budgets: [],
+    durations: [],
+    types: [],
+    priceRange: [0, 500000],
+  });
   const { addItem, isInCart, totalPrice, itemCount } = useCart();
 
-  const filteredFestivals = selectedMonth !== null
-    ? festivals.filter((f) => f.month === selectedMonth)
-    : festivals;
+  const filteredFestivals = useMemo(() => {
+    return festivals.filter((f) => {
+      // Month filter
+      if (selectedMonth !== null && f.month !== selectedMonth) {
+        return false;
+      }
+
+      // Duration filter
+      if (filters.durations.length > 0) {
+        const daysMatch = f.duration.match(/\d+/);
+        const days = daysMatch ? parseInt(daysMatch[0]) : 1;
+        
+        const is1Day = days === 1;
+        const is2to3Days = days >= 2 && days <= 3;
+        const is1Week = days >= 7;
+
+        const matchesDuration =
+          (filters.durations.includes("1-day") && is1Day) ||
+          (filters.durations.includes("2-3-days") && is2to3Days) ||
+          (filters.durations.includes("1-week") && is1Week);
+
+        if (!matchesDuration) return false;
+      }
+
+      return true;
+    });
+  }, [selectedMonth, filters]);
 
   const handleOpenPackModal = (festival: Festival) => {
     setSelectedFestival(festival);
@@ -121,7 +89,7 @@ export default function FestivalsPage() {
       <section className="relative py-20 overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src={festivalVodoun}
+            src={festivals[0]?.image}
             alt="Festival"
             className="w-full h-full object-cover"
           />
@@ -197,28 +165,42 @@ export default function FestivalsPage() {
             ))}
           </motion.div>
 
-          {selectedMonth !== null && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center mt-6"
-            >
-              <Button
-                variant="ghost"
-                onClick={() => setSelectedMonth(null)}
-                className="gap-2"
+          <div className="flex justify-center gap-4 mt-6">
+            {selectedMonth !== null && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
               >
-                <ChevronLeft className="w-4 h-4" />
-                Voir tous les festivals
-              </Button>
-            </motion.div>
-          )}
+                <Button
+                  variant="ghost"
+                  onClick={() => setSelectedMonth(null)}
+                  className="gap-2"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Tous les festivals
+                </Button>
+              </motion.div>
+            )}
+            
+            <AdvancedFilters
+              filters={filters}
+              onFiltersChange={setFilters}
+              maxPrice={500000}
+              showTypes={false}
+              showDurations={true}
+            />
+          </div>
         </div>
       </section>
 
       {/* Festivals Grid */}
       <section className="py-16">
         <div className="container mx-auto px-4">
+          {/* Results count */}
+          <div className="mb-6 text-muted-foreground">
+            {filteredFestivals.length} festival{filteredFestivals.length > 1 ? "s" : ""} trouvé{filteredFestivals.length > 1 ? "s" : ""}
+          </div>
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredFestivals.map((festival, idx) => (
               <motion.div
@@ -234,6 +216,7 @@ export default function FestivalsPage() {
                   dates={festival.dates}
                   city={festival.city}
                   duration={festival.duration}
+                  rating={festival.rating}
                   onChoosePack={() => handleOpenPackModal(festival)}
                   hasPackInCart={
                     isInCart(`${festival.id}-standard`) ||
@@ -250,9 +233,25 @@ export default function FestivalsPage() {
 
           {filteredFestivals.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">
-                Aucun festival ce mois-ci.
+              <Sparkles className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <h3 className="font-serif text-xl font-semibold mb-2">Aucun festival trouvé</h3>
+              <p className="text-muted-foreground mb-4">
+                Essayez d'ajuster vos filtres pour voir plus de résultats.
               </p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedMonth(null);
+                  setFilters({
+                    budgets: [],
+                    durations: [],
+                    types: [],
+                    priceRange: [0, 500000],
+                  });
+                }}
+              >
+                Réinitialiser les filtres
+              </Button>
             </div>
           )}
         </div>

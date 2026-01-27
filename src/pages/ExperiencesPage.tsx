@@ -3,12 +3,10 @@ import { Link } from "react-router-dom";
 import { Palette, Utensils, TreePine, Sparkles, Check, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ExperienceCard } from "@/components/cards/ExperienceCard";
-import festivalVodoun from "@/assets/festival-vodoun.jpg";
-import ganvieVillage from "@/assets/ganvie-village.jpg";
-import pendjariPark from "@/assets/pendjari-park.jpg";
-import ouidahDoor from "@/assets/ouidah-door.jpg";
+import { AdvancedFilters, FilterState } from "@/components/filters/AdvancedFilters";
+import { experiences } from "@/data/experiencesData";
 import { useCart } from "@/contexts/CartContext";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 const categories = [
   { id: "all", label: "Toutes", icon: Sparkles },
@@ -17,120 +15,64 @@ const categories = [
   { id: "nature", label: "Nature & Aventure", icon: TreePine },
 ];
 
-const experiences = [
-  {
-    id: "exp-1",
-    title: "Cérémonie Vodoun authentique",
-    category: "culture",
-    categoryLabel: "Culture",
-    image: festivalVodoun,
-    price: 45000,
-    duration: "4 heures",
-    days: 1,
-    rating: 4.9,
-    available: true,
-    description: "Assistez à une cérémonie vodoun avec un prêtre local.",
-  },
-  {
-    id: "exp-2",
-    title: "Cours de cuisine béninoise",
-    category: "gastro",
-    categoryLabel: "Gastronomie",
-    image: ganvieVillage,
-    price: 35000,
-    duration: "3 heures",
-    days: 1,
-    rating: 4.8,
-    available: true,
-    description: "Apprenez à préparer le fameux 'Amiwo' et autres plats locaux.",
-  },
-  {
-    id: "exp-3",
-    title: "Safari photo à Pendjari",
-    category: "nature",
-    categoryLabel: "Nature",
-    image: pendjariPark,
-    price: 120000,
-    duration: "8 heures",
-    days: 2,
-    rating: 5.0,
-    available: true,
-    description: "Partez à la rencontre des lions et éléphants d'Afrique.",
-  },
-  {
-    id: "exp-4",
-    title: "Atelier bronze d'Abomey",
-    category: "culture",
-    categoryLabel: "Artisanat",
-    image: ouidahDoor,
-    price: 40000,
-    duration: "5 heures",
-    days: 1,
-    rating: 4.7,
-    available: true,
-    description: "Créez votre propre sculpture avec les maîtres artisans.",
-  },
-  {
-    id: "exp-5",
-    title: "Dégustation de Sodabi",
-    category: "gastro",
-    categoryLabel: "Gastronomie",
-    image: ganvieVillage,
-    price: 25000,
-    duration: "2 heures",
-    days: 1,
-    rating: 4.6,
-    available: true,
-    description: "Découvrez l'alcool traditionnel du Bénin et ses secrets.",
-  },
-  {
-    id: "exp-6",
-    title: "Randonnée cascades Tanougou",
-    category: "nature",
-    categoryLabel: "Nature",
-    image: pendjariPark,
-    price: 55000,
-    duration: "6 heures",
-    days: 1,
-    rating: 4.8,
-    available: false,
-    description: "Trek vers les magnifiques chutes d'eau de l'Atacora.",
-  },
-  {
-    id: "exp-7",
-    title: "Initiation aux Gélédé",
-    category: "culture",
-    categoryLabel: "Culture",
-    image: festivalVodoun,
-    price: 50000,
-    duration: "4 heures",
-    days: 1,
-    rating: 4.9,
-    available: true,
-    description: "Découvrez l'art des masques Gélédé, patrimoine UNESCO.",
-  },
-  {
-    id: "exp-8",
-    title: "Pêche à Ganvié",
-    category: "nature",
-    categoryLabel: "Nature",
-    image: ganvieVillage,
-    price: 30000,
-    duration: "3 heures",
-    days: 1,
-    rating: 4.5,
-    available: true,
-    description: "Pêchez avec les habitants du village lacustre.",
-  },
-];
-
 export default function ExperiencesPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [filters, setFilters] = useState<FilterState>({
+    budgets: [],
+    durations: [],
+    types: [],
+    priceRange: [0, 200000],
+  });
   const { addItem, isInCart, totalPrice, itemCount } = useCart();
 
-  const filteredExperiences = selectedCategory === "all"
-    ? experiences
-    : experiences.filter((exp) => exp.category === selectedCategory);
+  const filteredExperiences = useMemo(() => {
+    return experiences.filter((exp) => {
+      // Category filter
+      if (selectedCategory !== "all" && exp.category !== selectedCategory) {
+        return false;
+      }
+
+      // Price range filter
+      if (exp.price < filters.priceRange[0] || exp.price > filters.priceRange[1]) {
+        return false;
+      }
+
+      // Budget filter
+      if (filters.budgets.length > 0) {
+        const isEconomique = exp.price < 50000;
+        const isPremium = exp.price >= 50000 && exp.price <= 150000;
+        const isVip = exp.price > 150000;
+
+        const matchesBudget = 
+          (filters.budgets.includes("economique") && isEconomique) ||
+          (filters.budgets.includes("premium") && isPremium) ||
+          (filters.budgets.includes("vip") && isVip);
+
+        if (!matchesBudget) return false;
+      }
+
+      // Duration filter
+      if (filters.durations.length > 0) {
+        const is1Day = exp.days === 1;
+        const is2to3Days = exp.days >= 2 && exp.days <= 3;
+        const is1Week = exp.days >= 7;
+
+        const matchesDuration =
+          (filters.durations.includes("1-day") && is1Day) ||
+          (filters.durations.includes("2-3-days") && is2to3Days) ||
+          (filters.durations.includes("1-week") && is1Week);
+
+        if (!matchesDuration) return false;
+      }
+
+      // Type filter
+      if (filters.types.length > 0) {
+        if (!filters.types.includes(exp.category)) return false;
+      }
+
+      return true;
+    });
+  }, [selectedCategory, filters]);
 
   const handleAddToCart = (exp: typeof experiences[0]) => {
     addItem({
@@ -166,12 +108,12 @@ export default function ExperiencesPage() {
             </p>
           </motion.div>
 
-          {/* Categories */}
+          {/* Categories & Filters */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="flex flex-wrap justify-center gap-3"
+            className="flex flex-wrap justify-center items-center gap-3"
           >
             {categories.map((cat) => (
               <button
@@ -187,6 +129,14 @@ export default function ExperiencesPage() {
                 {cat.label}
               </button>
             ))}
+            
+            <AdvancedFilters
+              filters={filters}
+              onFiltersChange={setFilters}
+              maxPrice={200000}
+              showTypes={true}
+              showDurations={true}
+            />
           </motion.div>
         </div>
       </section>
@@ -194,6 +144,11 @@ export default function ExperiencesPage() {
       {/* Experiences Grid */}
       <section className="py-16">
         <div className="container mx-auto px-4">
+          {/* Results count */}
+          <div className="mb-6 text-muted-foreground">
+            {filteredExperiences.length} expérience{filteredExperiences.length > 1 ? "s" : ""} trouvée{filteredExperiences.length > 1 ? "s" : ""}
+          </div>
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredExperiences.map((exp, idx) => (
               <motion.div
@@ -212,6 +167,7 @@ export default function ExperiencesPage() {
                   days={exp.days}
                   rating={exp.rating}
                   available={exp.available}
+                  location={exp.location}
                   onAdd={() => handleAddToCart(exp)}
                   inCart={isInCart(exp.id)}
                 />
@@ -224,6 +180,30 @@ export default function ExperiencesPage() {
               </motion.div>
             ))}
           </div>
+
+          {filteredExperiences.length === 0 && (
+            <div className="text-center py-16">
+              <Sparkles className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <h3 className="font-serif text-xl font-semibold mb-2">Aucune expérience trouvée</h3>
+              <p className="text-muted-foreground mb-4">
+                Essayez d'ajuster vos filtres pour voir plus de résultats.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedCategory("all");
+                  setFilters({
+                    budgets: [],
+                    durations: [],
+                    types: [],
+                    priceRange: [0, 200000],
+                  });
+                }}
+              >
+                Réinitialiser les filtres
+              </Button>
+            </div>
+          )}
         </div>
       </section>
 

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HeroCarousel from "@/components/home/HeroCarousel";
+import { RecommendedSection } from "@/components/recommendations/RecommendedSection";
 import { useCart } from "@/contexts/CartContext";
 import festivalVodoun from "@/assets/festival-vodoun.jpg";
 import ganvieVillage from "@/assets/ganvie-village.jpg";
@@ -533,6 +534,9 @@ export default function Index() {
           </div>
         </div>
       </section>
+
+      {/* Recommended Section */}
+      <RecommendedSection showOnHomepage />
 
       {/* Moteur Intelligent CTA */}
       <section className="py-24 relative overflow-hidden">
