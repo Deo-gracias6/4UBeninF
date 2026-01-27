@@ -9,6 +9,7 @@ import { AdminAuthProvider } from "@/contexts/AdminAuthContext";
 import { UserAuthProvider } from "@/contexts/UserAuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
+import { NotificationsProvider } from "@/contexts/NotificationsContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import Index from "./pages/Index";
 import DiscoverPage from "./pages/DiscoverPage";
@@ -49,63 +50,65 @@ const App = () => (
       <Sonner />
       <AdminAuthProvider>
         <UserAuthProvider>
-          <CartProvider>
-            <WishlistProvider>
-              <BrowserRouter>
-                <Routes>
-                  {/* Admin Routes */}
-                  <Route path="/admin/login" element={<AdminLoginPage />} />
-                  <Route path="/admin" element={<AdminLayout />}>
-                    <Route index element={<AdminDashboardPage />} />
-                    <Route path="users" element={<AdminUsersPage />} />
-                    <Route path="destinations" element={<AdminDestinationsPage />} />
-                    <Route path="experiences" element={<AdminExperiencesPage />} />
-                    <Route path="festivals" element={<AdminFestivalsPage />} />
-                    <Route path="trips" element={<AdminTripsPage />} />
-                    <Route path="engine" element={<AdminEnginePage />} />
-                    <Route path="reservations" element={<AdminReservationsPage />} />
-                  </Route>
+          <NotificationsProvider>
+            <CartProvider>
+              <WishlistProvider>
+                <BrowserRouter>
+                  <Routes>
+                    {/* Admin Routes */}
+                    <Route path="/admin/login" element={<AdminLoginPage />} />
+                    <Route path="/admin" element={<AdminLayout />}>
+                      <Route index element={<AdminDashboardPage />} />
+                      <Route path="users" element={<AdminUsersPage />} />
+                      <Route path="destinations" element={<AdminDestinationsPage />} />
+                      <Route path="experiences" element={<AdminExperiencesPage />} />
+                      <Route path="festivals" element={<AdminFestivalsPage />} />
+                      <Route path="trips" element={<AdminTripsPage />} />
+                      <Route path="engine" element={<AdminEnginePage />} />
+                      <Route path="reservations" element={<AdminReservationsPage />} />
+                    </Route>
 
-                  {/* Auth Routes - No Navbar/Footer */}
-                  <Route path="/connexion" element={<LoginPage />} />
-                  <Route path="/inscription" element={<LoginPage />} />
+                    {/* Auth Routes - No Navbar/Footer */}
+                    <Route path="/connexion" element={<LoginPage />} />
+                    <Route path="/inscription" element={<LoginPage />} />
 
-                  {/* Profile & Notifications - Have their own layout */}
-                  <Route path="/profil" element={<ProfilePage />} />
-                  <Route path="/notifications" element={<NotificationsPage />} />
+                    {/* Profile & Notifications - Have their own layout */}
+                    <Route path="/profil" element={<ProfilePage />} />
+                    <Route path="/notifications" element={<NotificationsPage />} />
 
-                  {/* Public Routes */}
-                  <Route
-                    path="/*"
-                    element={
-                      <>
-                        <Navbar />
-                        <Routes>
-                          <Route path="/" element={<Index />} />
-                          <Route path="/decouvrir" element={<DiscoverPage />} />
-                          <Route path="/decouvrir/:cityId" element={<CityDetailPage />} />
-                          <Route path="/destinations" element={<DestinationsPage />} />
-                          <Route path="/experiences" element={<ExperiencesPage />} />
-                          <Route path="/experiences/:id" element={<ExperienceDetailPage />} />
-                          <Route path="/festivals" element={<FestivalsPage />} />
-                          <Route path="/festivals/:id" element={<FestivalDetailPage />} />
-                          <Route path="/moteur" element={<MoteurPage />} />
-                          <Route path="/sorties" element={<OrganizedTripsPage />} />
-                          <Route path="/sorties/:id" element={<OrganizedTripDetailPage />} />
-                          <Route path="/paiement" element={<PaymentPage />} />
-                          <Route path="/panier" element={<CartPage />} />
-                          <Route path="/wishlist" element={<WishlistPage />} />
-                          <Route path="/a-propos" element={<AboutPage />} />
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
-                        <Footer />
-                      </>
-                    }
-                  />
-                </Routes>
-              </BrowserRouter>
-            </WishlistProvider>
-          </CartProvider>
+                    {/* Public Routes */}
+                    <Route
+                      path="/*"
+                      element={
+                        <>
+                          <Navbar />
+                          <Routes>
+                            <Route path="/" element={<Index />} />
+                            <Route path="/decouvrir" element={<DiscoverPage />} />
+                            <Route path="/decouvrir/:cityId" element={<CityDetailPage />} />
+                            <Route path="/destinations" element={<DestinationsPage />} />
+                            <Route path="/experiences" element={<ExperiencesPage />} />
+                            <Route path="/experiences/:id" element={<ExperienceDetailPage />} />
+                            <Route path="/festivals" element={<FestivalsPage />} />
+                            <Route path="/festivals/:id" element={<FestivalDetailPage />} />
+                            <Route path="/moteur" element={<MoteurPage />} />
+                            <Route path="/sorties" element={<OrganizedTripsPage />} />
+                            <Route path="/sorties/:id" element={<OrganizedTripDetailPage />} />
+                            <Route path="/paiement" element={<PaymentPage />} />
+                            <Route path="/panier" element={<CartPage />} />
+                            <Route path="/wishlist" element={<WishlistPage />} />
+                            <Route path="/a-propos" element={<AboutPage />} />
+                            <Route path="*" element={<NotFound />} />
+                          </Routes>
+                          <Footer />
+                        </>
+                      }
+                    />
+                  </Routes>
+                </BrowserRouter>
+              </WishlistProvider>
+            </CartProvider>
+          </NotificationsProvider>
         </UserAuthProvider>
       </AdminAuthProvider>
     </TooltipProvider>

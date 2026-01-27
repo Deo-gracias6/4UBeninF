@@ -10,8 +10,10 @@ import { Separator } from '@/components/ui/separator';
 import { organizedTrips } from '@/data/organizedTripsData';
 import { useCart } from '@/contexts/CartContext';
 import { useUserAuth } from '@/contexts/UserAuthContext';
+import { useNotifications } from '@/contexts/NotificationsContext';
 import { WishlistButton } from '@/components/cards/WishlistButton';
 import { ImageGallery } from '@/components/gallery/ImageGallery';
+import { TripReminderBanner } from '@/components/notifications/TripReminderBanner';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useState } from 'react';
@@ -22,6 +24,7 @@ export default function OrganizedTripDetailPage() {
   const navigate = useNavigate();
   const { addItem, isInCart } = useCart();
   const { user } = useUserAuth();
+  const { scheduleRemindersForTrip } = useNotifications();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
 
@@ -82,6 +85,9 @@ export default function OrganizedTripDetailPage() {
       city: trip.city,
       duration: trip.duration,
     });
+
+    // Schedule email reminders for this trip
+    scheduleRemindersForTrip(trip.id);
 
     navigate('/panier');
   };
@@ -157,6 +163,15 @@ export default function OrganizedTripDetailPage() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
+            {/* Reminder Banner */}
+            {user && alreadyInCart && (
+              <TripReminderBanner 
+                tripId={trip.id} 
+                tripTitle={trip.title} 
+                isBooked={alreadyInCart} 
+              />
+            )}
+
             {/* Description */}
             <div>
               <h2 className="font-serif text-2xl font-semibold mb-4">À propos de cette sortie</h2>
