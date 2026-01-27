@@ -34,8 +34,11 @@ import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminDestinationsPage from "./pages/admin/AdminDestinationsPage";
 import AdminExperiencesPage from "./pages/admin/AdminExperiencesPage";
 import AdminFestivalsPage from "./pages/admin/AdminFestivalsPage";
+import AdminTripsPage from "./pages/admin/AdminTripsPage";
 import AdminEnginePage from "./pages/admin/AdminEnginePage";
 import AdminReservationsPage from "./pages/admin/AdminReservationsPage";
+import OrganizedTripsPage from "./pages/OrganizedTripsPage";
+import OrganizedTripDetailPage from "./pages/OrganizedTripDetailPage";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +61,7 @@ const App = () => (
                     <Route path="destinations" element={<AdminDestinationsPage />} />
                     <Route path="experiences" element={<AdminExperiencesPage />} />
                     <Route path="festivals" element={<AdminFestivalsPage />} />
+                    <Route path="trips" element={<AdminTripsPage />} />
                     <Route path="engine" element={<AdminEnginePage />} />
                     <Route path="reservations" element={<AdminReservationsPage />} />
                   </Route>
@@ -86,6 +90,8 @@ const App = () => (
                           <Route path="/festivals" element={<FestivalsPage />} />
                           <Route path="/festivals/:id" element={<FestivalDetailPage />} />
                           <Route path="/moteur" element={<MoteurPage />} />
+                          <Route path="/sorties" element={<OrganizedTripsPage />} />
+                          <Route path="/sorties/:id" element={<OrganizedTripDetailPage />} />
                           <Route path="/paiement" element={<PaymentPage />} />
                           <Route path="/panier" element={<CartPage />} />
                           <Route path="/wishlist" element={<WishlistPage />} />

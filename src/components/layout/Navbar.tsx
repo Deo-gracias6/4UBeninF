@@ -15,6 +15,7 @@ const navLinks = [
   { path: "/destinations", label: "Destinations" },
   { path: "/experiences", label: "Expériences" },
   { path: "/festivals", label: "Festivals" },
+  { path: "/sorties", label: "Sorties" },
   { path: "/a-propos", label: "À propos" },
 ];
 
