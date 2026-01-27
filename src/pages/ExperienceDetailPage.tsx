@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
 import { experiences } from "@/data/experiencesData";
+import { ImageGallery } from "@/components/gallery/ImageGallery";
 
 export default function ExperienceDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -53,54 +54,53 @@ export default function ExperienceDetailPage() {
 
   return (
     <main className="pt-20">
-      {/* Hero Image */}
-      <section className="relative h-[50vh] md:h-[60vh] overflow-hidden">
-        <img
-          src={experience.image}
-          alt={experience.title}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/30 to-transparent" />
-        
-        <div className="absolute top-6 left-6 z-10">
+      {/* Header with Back Button */}
+      <section className="bg-secondary py-6">
+        <div className="container mx-auto px-4">
           <Button
             variant="outline"
             size="sm"
-            className="bg-white/90 backdrop-blur-sm hover:bg-white"
+            className="mb-4"
             onClick={() => navigate(-1)}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour
           </Button>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
-          <div className="container mx-auto">
-            <Badge variant="secondary" className="mb-4">
-              {experience.categoryLabel}
-            </Badge>
-            <h1 className="font-serif text-3xl md:text-5xl font-bold text-white mb-4">
-              {experience.title}
-            </h1>
-            <div className="flex flex-wrap items-center gap-4 text-white/90">
-              <span className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                {experience.location}
-              </span>
-              <span className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                {experience.duration}
-              </span>
-              <span className="flex items-center gap-2">
-                <Star className="w-4 h-4 text-accent" />
-                {experience.rating}/5
-              </span>
-              <span className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                {experience.groupSize}
-              </span>
-            </div>
+          
+          <Badge variant="secondary" className="mb-3">
+            {experience.categoryLabel}
+          </Badge>
+          <h1 className="font-serif text-3xl md:text-4xl font-bold mb-4">
+            {experience.title}
+          </h1>
+          <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
+            <span className="flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              {experience.location}
+            </span>
+            <span className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              {experience.duration}
+            </span>
+            <span className="flex items-center gap-2">
+              <Star className="w-4 h-4 text-accent" />
+              {experience.rating}/5
+            </span>
+            <span className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              {experience.groupSize}
+            </span>
           </div>
+        </div>
+      </section>
+
+      {/* Image Gallery */}
+      <section className="py-8">
+        <div className="container mx-auto px-4">
+          <ImageGallery 
+            images={experience.images} 
+            title={experience.title}
+          />
         </div>
       </section>
 

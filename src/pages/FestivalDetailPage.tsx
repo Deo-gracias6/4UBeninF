@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
 import { festivals } from "@/data/festivalsData";
 import { FestivalPackModal, FestivalPack } from "@/components/festivals/FestivalPackModal";
+import { ImageGallery } from "@/components/gallery/ImageGallery";
 
 export default function FestivalDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -60,54 +61,53 @@ export default function FestivalDetailPage() {
 
   return (
     <main className="pt-20">
-      {/* Hero Image */}
-      <section className="relative h-[50vh] md:h-[60vh] overflow-hidden">
-        <img
-          src={festival.image}
-          alt={festival.name}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/30 to-transparent" />
-        
-        <div className="absolute top-6 left-6 z-10">
+      {/* Header with Back Button */}
+      <section className="bg-secondary py-6">
+        <div className="container mx-auto px-4">
           <Button
             variant="outline"
             size="sm"
-            className="bg-white/90 backdrop-blur-sm hover:bg-white"
+            className="mb-4"
             onClick={() => navigate(-1)}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour
           </Button>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
-          <div className="container mx-auto">
-            <div className="flex flex-wrap gap-2 mb-4">
-              {festival.highlights.map((highlight, idx) => (
-                <Badge key={idx} variant="secondary" className="bg-accent/20 text-accent border-accent/30">
-                  {highlight}
-                </Badge>
-              ))}
-            </div>
-            <h1 className="font-serif text-3xl md:text-5xl font-bold text-white mb-4">
-              {festival.name}
-            </h1>
-            <div className="flex flex-wrap items-center gap-4 text-white/90">
-              <span className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                {festival.city}
-              </span>
-              <span className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                {festival.dates}
-              </span>
-              <span className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                {festival.duration}
-              </span>
-            </div>
+          
+          <div className="flex flex-wrap gap-2 mb-3">
+            {festival.highlights.map((highlight, idx) => (
+              <Badge key={idx} variant="secondary" className="bg-accent/20 text-accent border-accent/30">
+                {highlight}
+              </Badge>
+            ))}
           </div>
+          <h1 className="font-serif text-3xl md:text-4xl font-bold mb-4">
+            {festival.name}
+          </h1>
+          <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
+            <span className="flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              {festival.city}
+            </span>
+            <span className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              {festival.dates}
+            </span>
+            <span className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              {festival.duration}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* Image Gallery */}
+      <section className="py-8">
+        <div className="container mx-auto px-4">
+          <ImageGallery 
+            images={festival.images} 
+            title={festival.name}
+          />
         </div>
       </section>
 
