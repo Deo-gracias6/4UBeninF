@@ -16,7 +16,8 @@ import {
   Clock,
   Users,
   ShoppingCart,
-  Check
+  Check,
+  Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HeroCarousel from "@/components/home/HeroCarousel";
@@ -56,6 +57,7 @@ const destinations = [
 
 const experiences = [
   {
+    id: "exp-1",
     title: "Cérémonie Vodoun",
     category: "Culture",
     image: festivalVodoun,
@@ -65,6 +67,7 @@ const experiences = [
     icon: Palette,
   },
   {
+    id: "exp-3",
     title: "Safari Pendjari",
     category: "Nature",
     image: pendjariPark,
@@ -74,6 +77,7 @@ const experiences = [
     icon: Camera,
   },
   {
+    id: "exp-2",
     title: "Cuisine béninoise",
     category: "Gastronomie",
     image: ganvieVillage,
@@ -83,6 +87,7 @@ const experiences = [
     icon: Utensils,
   },
   {
+    id: "exp-8",
     title: "Village de Ganvié",
     category: "Découverte",
     image: ganvieVillage,
@@ -103,10 +108,10 @@ const activities = [
 ];
 
 const festivals = [
-  { id: "fest-1", name: "Festival du Vodoun", date: "10 Janvier", city: "Ouidah", image: festivalVodoun, price: 75000 },
-  { id: "fest-2", name: "Gélédé", date: "Mars", city: "Kétou", image: festivalVodoun, price: 65000 },
-  { id: "fest-3", name: "FinAB", date: "Avril", city: "Cotonou", image: cotonouCity, price: 50000 },
-  { id: "fest-4", name: "WeLovEya", date: "Août", city: "Grand-Popo", image: ganvieVillage, price: 55000 },
+  { id: "vodoun-fest", name: "Festival du Vodoun", date: "10 Janvier", city: "Ouidah", image: festivalVodoun, price: 75000 },
+  { id: "gelede-fest", name: "Gélédé", date: "Mars", city: "Kétou", image: festivalVodoun, price: 65000 },
+  { id: "finab-fest", name: "FinAB", date: "Avril", city: "Cotonou", image: cotonouCity, price: 50000 },
+  { id: "welobeya-fest", name: "WeLovEya", date: "Août", city: "Grand-Popo", image: ganvieVillage, price: 55000 },
 ];
 
 export default function Index() {
@@ -283,16 +288,25 @@ export default function Index() {
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-3">
                     <span className="text-lg font-bold text-primary">
                       {exp.price.toLocaleString()} FCFA
                     </span>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Link to={`/experiences/${exp.id}`} className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full gap-1">
+                        <Eye className="w-4 h-4" />
+                        Détails
+                      </Button>
+                    </Link>
                     <Button 
                       size="sm" 
-                      variant={isInCart(`exp-home-${idx}`) ? "outline" : "gold"} 
-                      className="gap-1"
+                      variant={isInCart(exp.id) ? "outline" : "gold"} 
+                      className="flex-1 gap-1"
                       onClick={() => handleQuickAdd({
-                        id: `exp-home-${idx}`,
+                        id: exp.id,
                         type: "experience",
                         name: exp.title,
                         price: exp.price,
@@ -300,7 +314,7 @@ export default function Index() {
                         category: exp.category,
                       })}
                     >
-                      {isInCart(`exp-home-${idx}`) ? (
+                      {isInCart(exp.id) ? (
                         <>
                           <Check className="w-4 h-4" />
                           Ajouté
@@ -372,33 +386,41 @@ export default function Index() {
                   <span className="text-accent font-semibold text-sm mb-2">
                     {activity.price.toLocaleString()} FCFA
                   </span>
-                  <Button 
-                    size="sm" 
-                    variant={isInCart(activity.id) ? "outline" : "gold"} 
-                    className="gap-1 text-xs px-3 py-1 h-7"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleQuickAdd({
-                        id: activity.id,
-                        type: "activity",
-                        name: activity.title,
-                        price: activity.price,
-                        image: activity.image,
-                      });
-                    }}
-                  >
-                    {isInCart(activity.id) ? (
-                      <>
-                        <Check className="w-3 h-3" />
-                        Ajouté
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingCart className="w-3 h-3" />
-                        Ajouter
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex gap-2 w-full">
+                    <Link to="/experiences" className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full gap-1 text-xs px-2 py-1 h-7 bg-white/10 border-white/30 text-white hover:bg-white/20">
+                        <Eye className="w-3 h-3" />
+                        Détails
+                      </Button>
+                    </Link>
+                    <Button 
+                      size="sm" 
+                      variant={isInCart(activity.id) ? "outline" : "gold"} 
+                      className="flex-1 gap-1 text-xs px-2 py-1 h-7"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleQuickAdd({
+                          id: activity.id,
+                          type: "activity",
+                          name: activity.title,
+                          price: activity.price,
+                          image: activity.image,
+                        });
+                      }}
+                    >
+                      {isInCart(activity.id) ? (
+                        <>
+                          <Check className="w-3 h-3" />
+                          Ajouté
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingCart className="w-3 h-3" />
+                          Ajouter
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -468,35 +490,43 @@ export default function Index() {
                       {festival.price.toLocaleString()} FCFA
                     </span>
                   </div>
-                  <Button 
-                    size="sm" 
-                    variant={isInCart(festival.id) ? "outline" : "gold"} 
-                    className="w-full mt-3 gap-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleQuickAdd({
-                        id: festival.id,
-                        type: "festival",
-                        name: festival.name,
-                        price: festival.price,
-                        image: festival.image,
-                        dates: festival.date,
-                        city: festival.city,
-                      });
-                    }}
-                  >
-                    {isInCart(festival.id) ? (
-                      <>
-                        <Check className="w-4 h-4" />
-                        Ajouté
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingCart className="w-4 h-4" />
-                        Ajouter
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex gap-2 mt-3">
+                    <Link to={`/festivals/${festival.id}`} className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full gap-1 bg-white/10 border-white/30 text-white hover:bg-white/20">
+                        <Eye className="w-4 h-4" />
+                        Détails
+                      </Button>
+                    </Link>
+                    <Button 
+                      size="sm" 
+                      variant={isInCart(festival.id) ? "outline" : "gold"} 
+                      className="flex-1 gap-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleQuickAdd({
+                          id: festival.id,
+                          type: "festival",
+                          name: festival.name,
+                          price: festival.price,
+                          image: festival.image,
+                          dates: festival.date,
+                          city: festival.city,
+                        });
+                      }}
+                    >
+                      {isInCart(festival.id) ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Ajouté
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingCart className="w-4 h-4" />
+                          Ajouter
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </motion.div>
             ))}
