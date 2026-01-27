@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Calendar, MapPin, Clock, Sparkles, Check, Ticket, Star, Crown, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { WishlistButton } from "./WishlistButton";
 
 interface FestivalCardProps {
   id: string;
@@ -13,6 +14,7 @@ interface FestivalCardProps {
   onChoosePack?: () => void;
   hasPackInCart?: boolean;
   showDetailsLink?: boolean;
+  rating?: number;
 }
 
 export function FestivalCard({
@@ -25,6 +27,7 @@ export function FestivalCard({
   onChoosePack,
   hasPackInCart = false,
   showDetailsLink = true,
+  rating = 4.8,
 }: FestivalCardProps) {
   return (
     <motion.div
@@ -38,6 +41,25 @@ export function FestivalCard({
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent" />
+        
+        {/* Wishlist & Rating */}
+        <div className="absolute top-3 right-3 flex items-center gap-2">
+          <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/90 backdrop-blur-sm">
+            <Star className="w-3 h-3 fill-accent text-accent" />
+            <span className="text-xs font-semibold">{rating}</span>
+          </div>
+          <WishlistButton
+            item={{
+              id,
+              type: "festival",
+              name,
+              image,
+              location: city,
+            }}
+            size="sm"
+          />
+        </div>
+
         <div className="absolute bottom-4 left-4 right-4">
           <h3 className="font-serif text-xl font-semibold text-white mb-2">
             {name}

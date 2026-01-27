@@ -17,6 +17,8 @@ import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
 import { experiences } from "@/data/experiencesData";
 import { ImageGallery } from "@/components/gallery/ImageGallery";
+import { ReviewsDisplay } from "@/components/reviews/ReviewsDisplay";
+import { WishlistButton } from "@/components/cards/WishlistButton";
 
 export default function ExperienceDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -278,6 +280,16 @@ export default function ExperienceDetailPage() {
               </motion.div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Reviews Section */}
+      <section className="py-16 bg-secondary">
+        <div className="container mx-auto px-4">
+          <h2 className="font-serif text-2xl md:text-3xl font-bold mb-8">
+            Avis des voyageurs
+          </h2>
+          <ReviewsDisplay itemId={experience.id} />
         </div>
       </section>
     </main>

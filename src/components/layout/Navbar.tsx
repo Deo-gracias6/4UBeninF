@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Sparkles, LogIn, ShoppingCart } from "lucide-react";
+import { Menu, X, Sparkles, LogIn, ShoppingCart, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUserAuth } from "@/contexts/UserAuthContext";
 import { useCart } from "@/contexts/CartContext";
+import { useWishlist } from "@/contexts/WishlistContext";
 import { UserMenu } from "./UserMenu";
+import { GlobalSearch } from "@/components/search/GlobalSearch";
 
 const navLinks = [
   { path: "/", label: "Accueil" },
@@ -22,6 +24,7 @@ export function Navbar() {
   const location = useLocation();
   const { isAuthenticated } = useUserAuth();
   const { itemCount, totalPrice } = useCart();
+  const { itemCount: wishlistCount } = useWishlist();
 
   // Determine if this page has a dark hero (homepage only)
   const isHomePage = location.pathname === "/";
@@ -85,8 +88,31 @@ export function Navbar() {
             ))}
           </div>
 
-          {/* CTA Button, Cart & Auth */}
-          <div className="hidden lg:flex items-center gap-3">
+          {/* Search, Wishlist, Cart & Auth */}
+          <div className="hidden lg:flex items-center gap-2">
+            {/* Global Search */}
+            <GlobalSearch isLight={shouldUseLightText} />
+
+            {/* Wishlist Icon */}
+            <Link to="/wishlist">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`relative gap-2 ${
+                  shouldUseLightText
+                    ? "text-white hover:bg-white/10"
+                    : "text-foreground hover:bg-secondary"
+                }`}
+              >
+                <Heart className="w-5 h-5" />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-white text-xs flex items-center justify-center font-medium">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
+
             {/* Cart Icon */}
             {itemCount > 0 && (
               <Link to="/panier">
@@ -138,6 +164,24 @@ export function Navbar() {
 
           {/* Mobile Menu Button */}
           <div className="lg:hidden flex items-center gap-2">
+            {/* Mobile Wishlist */}
+            <Link to="/wishlist">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`relative ${
+                  shouldUseLightText ? "text-white" : "text-foreground"
+                }`}
+              >
+                <Heart className="w-5 h-5" />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-white text-xs flex items-center justify-center font-medium">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
+
             {itemCount > 0 && (
               <Link to="/panier">
                 <Button
@@ -180,6 +224,11 @@ export function Navbar() {
             className="lg:hidden border-t border-border bg-background"
           >
             <div className="container mx-auto px-4 py-4 flex flex-col gap-2">
+              {/* Mobile Search */}
+              <div className="mb-2">
+                <GlobalSearch isMobile onClose={() => setIsOpen(false)} />
+              </div>
+
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
@@ -203,6 +252,12 @@ export function Navbar() {
                         Mon profil
                       </Button>
                     </Link>
+                    <Link to="/wishlist" onClick={() => setIsOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start mb-2 gap-2">
+                        <Heart className="w-4 h-4" />
+                        Ma Wishlist ({wishlistCount})
+                      </Button>
+                    </Link>
                     <Link to="/notifications" onClick={() => setIsOpen(false)}>
                       <Button variant="ghost" className="w-full justify-start mb-2">
                         Notifications
@@ -219,6 +274,12 @@ export function Navbar() {
                   </>
                 ) : (
                   <>
+                    <Link to="/wishlist" onClick={() => setIsOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start mb-2 gap-2">
+                        <Heart className="w-4 h-4" />
+                        Ma Wishlist ({wishlistCount})
+                      </Button>
+                    </Link>
                     <Link to="/connexion" onClick={() => setIsOpen(false)}>
                       <Button variant="ghost" className="w-full justify-start gap-2 mb-2">
                         <LogIn className="w-4 h-4" />
