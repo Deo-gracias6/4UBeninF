@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import HeroCarousel from "@/components/home/HeroCarousel";
 import { RecommendedSection } from "@/components/recommendations/RecommendedSection";
+import { OrganizedTripsSection } from "@/components/home/OrganizedTripsSection";
 import { useCart } from "@/contexts/CartContext";
 import festivalVodoun from "@/assets/festival-vodoun.jpg";
 import ganvieVillage from "@/assets/ganvie-village.jpg";
@@ -428,6 +429,9 @@ export default function Index() {
           </div>
         </div>
       </section>
+
+      {/* Organized Trips Section */}
+      <OrganizedTripsSection />
 
       {/* Festivals Section */}
       <section className="py-24 bg-foreground text-white relative overflow-hidden">

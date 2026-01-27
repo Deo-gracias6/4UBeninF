@@ -2,7 +2,7 @@ import { createContext, useContext, useState, ReactNode, useCallback } from "rea
 
 export interface WishlistItem {
   id: string;
-  type: "experience" | "festival" | "city" | "activity";
+  type: "experience" | "festival" | "city" | "activity" | "trip";
   name: string;
   image?: string;
   price?: number;

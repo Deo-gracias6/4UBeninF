@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Users,
+  Bus,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ const menuItems = [
   { path: '/admin/destinations', label: 'Destinations', icon: MapPin },
   { path: '/admin/experiences', label: 'Expériences', icon: Sparkles },
   { path: '/admin/festivals', label: 'Festivals', icon: Calendar },
+  { path: '/admin/trips', label: 'Sorties organisées', icon: Bus },
   { path: '/admin/engine', label: 'Moteur IA', icon: Settings },
   { path: '/admin/reservations', label: 'Réservations', icon: CreditCard },
 ];
