@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Sparkles, Compass } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import heroAmazone from "@/assets/hero-amazone.jpg";
 import heroOuidah from "@/assets/hero-ouidah.jpg";
 import heroKota from "@/assets/hero-kota.jpg";
@@ -99,13 +101,32 @@ export default function HeroCarousel() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-xl md:text-2xl text-white/90 mb-6 font-light max-w-2xl mx-auto"
+            className="text-xl md:text-2xl text-white/90 mb-10 font-light max-w-2xl mx-auto"
           >
             Des expériences, pas juste des voyages.
           </motion.p>
 
-          {/* Hero Search */}
-          <HeroSearch />
+          {/* CTA Buttons + Search */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="flex flex-col md:flex-row items-center justify-center gap-4"
+          >
+            <Link to="/moteur">
+              <Button variant="gold" size="lg" className="gap-2 text-base px-6">
+                <Sparkles className="w-5 h-5" />
+                Créer mon voyage
+              </Button>
+            </Link>
+            <Link to="/experiences">
+              <Button variant="outline-light" size="lg" className="gap-2 text-base px-6">
+                <Compass className="w-5 h-5" />
+                Explorer les expériences
+              </Button>
+            </Link>
+            <HeroSearch />
+          </motion.div>
         </motion.div>
       </div>
 
