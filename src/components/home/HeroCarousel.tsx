@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
-import { Sparkles, Compass, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ChevronRight } from "lucide-react";
 import heroAmazone from "@/assets/hero-amazone.jpg";
 import heroOuidah from "@/assets/hero-ouidah.jpg";
 import heroKota from "@/assets/hero-kota.jpg";
+import HeroSearch from "./HeroSearch";
 
 const slides = [
   {
@@ -77,8 +76,7 @@ export default function HeroCarousel() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent/20 backdrop-blur-sm border border-accent/30 text-accent mb-8"
           >
-            <Sparkles className="w-4 h-4" />
-            <span className="text-sm font-medium">Voyage sur mesure au Bénin</span>
+            <span className="text-sm font-medium">✨ Voyage sur mesure au Bénin</span>
           </motion.div>
 
           {/* Main Title */}
@@ -101,31 +99,13 @@ export default function HeroCarousel() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-xl md:text-2xl text-white/90 mb-12 font-light max-w-2xl mx-auto"
+            className="text-xl md:text-2xl text-white/90 mb-6 font-light max-w-2xl mx-auto"
           >
             Des expériences, pas juste des voyages.
           </motion.p>
 
-          {/* CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center"
-          >
-            <Link to="/moteur">
-              <Button variant="gold" size="xl" className="gap-2 w-full sm:w-auto text-lg">
-                <Sparkles className="w-5 h-5" />
-                Créer mon voyage
-              </Button>
-            </Link>
-            <Link to="/experiences">
-              <Button variant="glass" size="xl" className="gap-2 w-full sm:w-auto text-lg">
-                <Compass className="w-5 h-5" />
-                Découvrir les expériences
-              </Button>
-            </Link>
-          </motion.div>
+          {/* Hero Search */}
+          <HeroSearch />
         </motion.div>
       </div>
 

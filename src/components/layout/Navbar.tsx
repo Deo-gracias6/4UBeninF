@@ -89,10 +89,8 @@ export function Navbar() {
             ))}
           </div>
 
-          {/* Search, Wishlist, Cart & Auth */}
+          {/* Wishlist, Cart & Auth */}
           <div className="hidden lg:flex items-center gap-2">
-            {/* Global Search */}
-            <GlobalSearch isLight={shouldUseLightText} />
 
             {/* Wishlist Icon */}
             <Link to="/wishlist">
