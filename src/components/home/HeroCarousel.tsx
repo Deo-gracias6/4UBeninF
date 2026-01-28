@@ -119,12 +119,6 @@ export default function HeroCarousel() {
                 Créer mon voyage
               </Button>
             </Link>
-            <Link to="/experiences">
-              <Button variant="outline-light" size="lg" className="gap-2 text-base px-6">
-                <Compass className="w-5 h-5" />
-                Explorer les expériences
-              </Button>
-            </Link>
             <HeroSearch />
           </motion.div>
         </motion.div>
