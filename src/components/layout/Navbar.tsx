@@ -111,6 +111,7 @@ export function Navbar() {
                 )}
               </Button>
             </Link>
+            
 
             {/* Cart Icon */}
             {itemCount > 0 && (

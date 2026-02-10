@@ -1,18 +1,23 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Mail, Lock, UserPlus, Loader2, ArrowLeft } from 'lucide-react';
+import { User, Mail, Lock, UserPlus, Loader2, ArrowLeft, Phone, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 
 export default function RegisterPage() {
-  const [name, setName] = useState('');
+  // États pour tous les champs requis par ton API
+  const [nom, setNom] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [country, setCountry] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
   const { register } = useUserAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -23,16 +28,21 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name.trim()) {
+    // Validations
+    if (!nom.trim()) {
       toast({ title: 'Veuillez entrer votre nom', variant: 'destructive' });
+      return;
+    }
+    if (!lastName.trim()) {
+      toast({ title: 'Veuillez entrer votre prénom', variant: 'destructive' });
       return;
     }
     if (!email.trim()) {
       toast({ title: 'Veuillez entrer votre email', variant: 'destructive' });
       return;
     }
-    if (!password.trim() || password.length < 6) {
-      toast({ title: 'Mot de passe invalide (6 caractères minimum)', variant: 'destructive' });
+    if (!password.trim() || password.length < 8) {
+      toast({ title: 'Mot de passe invalide (8 caractères minimum)', variant: 'destructive' });
       return;
     }
     if (password !== confirmPassword) {
@@ -41,15 +51,102 @@ export default function RegisterPage() {
     }
 
     setIsLoading(true);
-    const success = await register(name, email, password);
 
-    if (success) {
-      toast({ title: 'Compte créé avec succès', description: 'Bienvenue sur 4UBENIN !' });
-      navigate(from, { replace: true });
-    } else {
-      toast({ title: 'Erreur lors de la création du compte', variant: 'destructive' });
+    try {
+      // Appel à ton API avec les données exactes attendues
+      await register({
+        email: email.trim(),
+        password,
+        password_confirmation: confirmPassword,
+        nom: nom.trim(),
+        last_name: lastName.trim(),
+        phone: phone.trim(),
+        country: country.trim(),
+        preferred_language: 'fr' // Langue par défaut
+      });
+
+      toast({ 
+        title: 'Compte créé avec succès !', 
+        description: 'Veuillez vous connecter pour continuer.' 
+      });
+      
+      // Redirection vers la page de connexion avec un message
+      navigate('/connexion', { 
+        state: { message: 'Compte créé avec succès. Veuillez vous connecter.' } 
+      });
+      
+    } catch (error: any) {
+      // Gestion des erreurs de l'API avec détails
+      console.error('Erreur d\'inscription:', error);
+      
+      let errorMessage = 'Erreur lors de la création du compte';
+      let errorTitle = 'Erreur';
+      
+      // Essayons d'extraire le message d'erreur de différentes façons
+      if (error.response) {
+        // Si c'est une erreur HTTP avec réponse
+        const data = error.response.data;
+        
+        // Cas 1: Erreur Laravel typique avec champ "message"
+        if (data.message) {
+          errorMessage = data.message;
+        }
+        
+        // Cas 2: Erreurs de validation Laravel (422)
+        if (data.errors) {
+          // Concaténer toutes les erreurs de validation
+          const validationErrors = [];
+          for (const field in data.errors) {
+            if (Array.isArray(data.errors[field])) {
+              validationErrors.push(...data.errors[field]);
+            } else {
+              validationErrors.push(data.errors[field]);
+            }
+          }
+          if (validationErrors.length > 0) {
+            errorMessage = validationErrors.join(', ');
+          }
+        }
+        
+        // Cas 3: Autre structure d'erreur
+        if (data.error) {
+          errorMessage = data.error;
+        }
+        
+        // Ajouter le statut HTTP si disponible
+        if (error.response.status) {
+          errorTitle = `Erreur ${error.response.status}`;
+        }
+      } 
+      // Cas 4: Erreur réseau ou autre
+      else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Afficher un message spécifique pour les emails déjà utilisés
+      if (errorMessage.toLowerCase().includes('email') && 
+          (errorMessage.toLowerCase().includes('already') || 
+           errorMessage.toLowerCase().includes('existe') ||
+           errorMessage.toLowerCase().includes('utilisé'))) {
+        errorTitle = 'Email déjà utilisé';
+        errorMessage = 'Cette adresse email est déjà associée à un compte.';
+      }
+      
+      // Afficher un message spécifique pour les mots de passe faibles
+      if (errorMessage.toLowerCase().includes('password') || 
+          errorMessage.toLowerCase().includes('mot de passe')) {
+        errorTitle = 'Mot de passe invalide';
+      }
+      
+      toast({ 
+        title: errorTitle, 
+        description: errorMessage, 
+        variant: 'destructive',
+        duration: 5000 // Garder plus longtemps pour lire
+      });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (
@@ -99,22 +196,39 @@ export default function RegisterPage() {
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium mb-2">
                   <User className="w-4 h-4 text-primary" />
-                  Nom complet
+                  Nom *
                 </label>
                 <Input
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Jean Dupont"
+                  value={nom}
+                  onChange={(e) => setNom(e.target.value)}
+                  placeholder="Dupont"
                   className="h-12"
                   disabled={isLoading}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium mb-2">
+                  <User className="w-4 h-4 text-primary" />
+                  Prénom *
+                </label>
+                <Input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Jean"
+                  className="h-12"
+                  disabled={isLoading}
+                  required
                 />
               </div>
 
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium mb-2">
                   <Mail className="w-4 h-4 text-primary" />
-                  Email
+                  Email *
                 </label>
                 <Input
                   type="email"
@@ -123,13 +237,44 @@ export default function RegisterPage() {
                   placeholder="votre@email.com"
                   className="h-12"
                   disabled={isLoading}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium mb-2">
+                  <Phone className="w-4 h-4 text-primary" />
+                  Téléphone
+                </label>
+                <Input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+229 XX XX XX XX"
+                  className="h-12"
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium mb-2">
+                  <Globe className="w-4 h-4 text-primary" />
+                  Pays
+                </label>
+                <Input
+                  type="text"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  placeholder="Bénin"
+                  className="h-12"
+                  disabled={isLoading}
                 />
               </div>
 
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium mb-2">
                   <Lock className="w-4 h-4 text-primary" />
-                  Mot de passe
+                  Mot de passe *
                 </label>
                 <Input
                   type="password"
@@ -138,13 +283,17 @@ export default function RegisterPage() {
                   placeholder="••••••••"
                   className="h-12"
                   disabled={isLoading}
+                  required
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Minimum 8 caractères
+                </p>
               </div>
 
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium mb-2">
                   <Lock className="w-4 h-4 text-primary" />
-                  Confirmer le mot de passe
+                  Confirmer le mot de passe *
                 </label>
                 <Input
                   type="password"
@@ -153,6 +302,7 @@ export default function RegisterPage() {
                   placeholder="••••••••"
                   className="h-12"
                   disabled={isLoading}
+                  required
                 />
               </div>
 

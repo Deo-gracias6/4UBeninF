@@ -70,7 +70,7 @@ const App = () => (
 
                     {/* Auth Routes - No Navbar/Footer */}
                     <Route path="/connexion" element={<LoginPage />} />
-                    <Route path="/inscription" element={<LoginPage />} />
+                    <Route path="/inscription" element={<RegisterPage />} />
 
                     {/* Profile & Notifications - Have their own layout */}
                     <Route path="/profil" element={<ProfilePage />} />

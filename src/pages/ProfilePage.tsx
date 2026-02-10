@@ -16,6 +16,7 @@ import {
   XCircle,
   Loader2,
   Bell,
+  Globe,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,8 +56,8 @@ function TripCard({ trip }: { trip: Trip }) {
         <div>
           <h3 className="font-serif text-lg font-semibold">{trip.title}</h3>
           <p className="text-sm text-muted-foreground">
-            {format(trip.startDate, 'dd MMMM yyyy', { locale: fr })} -{' '}
-            {format(trip.endDate, 'dd MMMM yyyy', { locale: fr })}
+            {format(new Date(trip.startDate), 'dd MMMM yyyy', { locale: fr })} -{' '}
+            {format(new Date(trip.endDate), 'dd MMMM yyyy', { locale: fr })}
           </p>
         </div>
         <Badge className={statusConfig[trip.status].color}>
@@ -82,7 +83,7 @@ function TripCard({ trip }: { trip: Trip }) {
           {budgetLabels[trip.budget].label}
         </Badge>
         <span className="text-xs text-muted-foreground">
-          Créé le {format(trip.createdAt, 'dd/MM/yyyy', { locale: fr })}
+          Créé le {format(new Date(trip.createdAt), 'dd/MM/yyyy', { locale: fr })}
         </span>
       </div>
     </motion.div>
@@ -90,35 +91,48 @@ function TripCard({ trip }: { trip: Trip }) {
 }
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, trips, updateProfile, isLoading } = useUserAuth();
+  const { user, isAuthenticated, trips, updateProfile, loading } = useUserAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [editedName, setEditedName] = useState('');
+  
+  // États pour l'édition
+  const [editedNom, setEditedNom] = useState('');
+  const [editedLastName, setEditedLastName] = useState('');
   const [editedPhone, setEditedPhone] = useState('');
+  const [editedCountry, setEditedCountry] = useState('');
 
   if (!isAuthenticated || !user) {
     return <Navigate to="/connexion" state={{ from: '/profil' }} replace />;
   }
 
   const handleEdit = () => {
-    setEditedName(user.name);
+    setEditedNom(user.nom);
+    setEditedLastName(user.last_name);
     setEditedPhone(user.phone || '');
+    setEditedCountry(user.country || '');
     setIsEditing(true);
   };
 
   const handleSave = async () => {
     setIsSaving(true);
+    
     const success = await updateProfile({
-      name: editedName,
+      nom: editedNom,
+      last_name: editedLastName,
       phone: editedPhone || undefined,
+      country: editedCountry || undefined,
     });
 
     if (success) {
       toast({ title: 'Profil mis à jour', description: 'Vos informations ont été enregistrées.' });
       setIsEditing(false);
     } else {
-      toast({ title: 'Erreur', description: 'Impossible de mettre à jour le profil.', variant: 'destructive' });
+      toast({ 
+        title: 'Erreur', 
+        description: 'Impossible de mettre à jour le profil.', 
+        variant: 'destructive' 
+      });
     }
     setIsSaving(false);
   };
@@ -130,7 +144,7 @@ export default function ProfilePage() {
   const upcomingTrips = trips.filter((t) => t.status === 'upcoming');
   const pastTrips = trips.filter((t) => t.status !== 'upcoming');
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -146,7 +160,6 @@ export default function ProfilePage() {
         <div className="absolute inset-0 pattern-african opacity-5 pointer-events-none" />
 
         <div className="container mx-auto px-4 py-12 relative z-10">
-          {/* Profile Header */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -157,9 +170,13 @@ export default function ProfilePage() {
                 {/* Avatar */}
                 <div className="relative">
                   <div className="w-24 h-24 rounded-full gradient-hero flex items-center justify-center shadow-purple">
-                    <span className="text-3xl font-bold text-white">
-                      {user.name.charAt(0).toUpperCase()}
-                    </span>
+                    {user.avatar ? (
+                      <img src={user.avatar} alt={user.nom} className="w-full h-full rounded-full object-cover" />
+                    ) : (
+                      <span className="text-3xl font-bold text-white">
+                        {user.nom.charAt(0).toUpperCase()}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -167,22 +184,43 @@ export default function ProfilePage() {
                 <div className="flex-1 text-center md:text-left">
                   {isEditing ? (
                     <div className="space-y-4">
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Nom</label>
-                        <Input
-                          value={editedName}
-                          onChange={(e) => setEditedName(e.target.value)}
-                          className="mt-1"
-                        />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">Nom</label>
+                          <Input
+                            value={editedNom}
+                            onChange={(e) => setEditedNom(e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">Prénom</label>
+                          <Input
+                            value={editedLastName}
+                            onChange={(e) => setEditedLastName(e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Téléphone</label>
-                        <Input
-                          value={editedPhone}
-                          onChange={(e) => setEditedPhone(e.target.value)}
-                          placeholder="+229 XX XX XX XX"
-                          className="mt-1"
-                        />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">Téléphone</label>
+                          <Input
+                            value={editedPhone}
+                            onChange={(e) => setEditedPhone(e.target.value)}
+                            placeholder="+229 XX XX XX XX"
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">Pays</label>
+                          <Input
+                            value={editedCountry}
+                            onChange={(e) => setEditedCountry(e.target.value)}
+                            placeholder="Bénin"
+                            className="mt-1"
+                          />
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         <Button onClick={handleSave} disabled={isSaving} className="gap-2">
@@ -197,7 +235,9 @@ export default function ProfilePage() {
                     </div>
                   ) : (
                     <>
-                      <h1 className="font-serif text-2xl md:text-3xl font-bold mb-2">{user.name}</h1>
+                      <h1 className="font-serif text-2xl md:text-3xl font-bold mb-2">
+                        {user.nom} {user.last_name}
+                      </h1>
                       <div className="flex flex-col md:flex-row gap-4 text-muted-foreground">
                         <span className="flex items-center gap-2">
                           <Mail className="w-4 h-4" />
@@ -209,10 +249,16 @@ export default function ProfilePage() {
                             {user.phone}
                           </span>
                         )}
-                        <span className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4" />
-                          Membre depuis {format(user.createdAt, 'MMMM yyyy', { locale: fr })}
-                        </span>
+                        {user.country && (
+                          <span className="flex items-center gap-2">
+                            <Globe className="w-4 h-4" />
+                            {user.country}
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-2 text-sm text-muted-foreground flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        Membre depuis {format(new Date(user.created_at), 'MMMM yyyy', { locale: fr })}
                       </div>
                     </>
                   )}
