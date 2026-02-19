@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
@@ -7,31 +8,82 @@ import {
   Star, 
   Users, 
   Check, 
-  X, 
   ShoppingCart,
   Calendar,
-  Mountain
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
-import { experiences } from "@/data/experiencesData";
-import { ImageGallery } from "@/components/gallery/ImageGallery";
-import { ReviewsDisplay } from "@/components/reviews/ReviewsDisplay";
-import { WishlistButton } from "@/components/cards/WishlistButton";
+import experienceService, { ExperienceDetail } from "@/services/experienceService";
+
+// Images de fallback
+import festivalVodoun from "@/assets/festival-vodoun.jpg";
 
 export default function ExperienceDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { addItem, isInCart } = useCart();
+  
+  const [experience, setExperience] = useState<ExperienceDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  const experience = experiences.find((exp) => exp.id === id);
+  useEffect(() => {
+    const loadExperience = async () => {
+      if (!slug) return;
+      
+      try {
+        setLoading(true);
+        console.log('🎭 Chargement expérience avec slug:', slug);
+        const data = await experienceService.getBySlug(slug);
+        console.log('✅ Expérience chargée:', data);
+        setExperience(data);
+      } catch (err: any) {
+        console.error('❌ Erreur chargement expérience:', err);
+        console.error('❌ Message:', err.message);
+        console.error('❌ Response:', err.response?.data);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (!experience) {
+    loadExperience();
+  }, [slug]);
+
+  const handleAddToCart = () => {
+    if (!experience) return;
+    
+    const price = typeof experience.price === 'string' 
+      ? parseFloat(experience.price) 
+      : experience.price;
+    
+    addItem({
+      id: experience.id,
+      type: "experience",
+      name: experience.name,
+      price: price,
+      image: experience.mainImage || undefined,
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center pt-20">
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error || !experience) {
     return (
       <main className="pt-20 min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="font-serif text-2xl font-bold mb-4">Expérience non trouvée</h1>
+          <p className="text-muted-foreground mb-4">
+            L'expérience "{slug}" n'existe pas ou n'est pas active.
+          </p>
           <Link to="/experiences">
             <Button variant="outline">Retour aux expériences</Button>
           </Link>
@@ -40,19 +92,18 @@ export default function ExperienceDetailPage() {
     );
   }
 
-  const handleAddToCart = () => {
-    addItem({
-      id: experience.id,
-      type: "experience",
-      name: experience.title,
-      price: experience.price,
-      image: experience.image,
-      category: experience.categoryLabel,
-      duration: experience.duration,
-    });
-  };
-
+  const price = typeof experience.price === 'string' 
+    ? parseFloat(experience.price) 
+    : experience.price;
+    
   const inCart = isInCart(experience.id);
+  
+  // ✅ Utilise durationMinutes (camelCase comme le backend)
+  const hours = Math.floor(experience.durationMinutes / 60);
+  const minutes = experience.durationMinutes % 60;
+  const durationText = hours > 0 
+    ? `${hours}h${minutes > 0 ? ` ${minutes}min` : ''}`
+    : `${minutes}min`;
 
   return (
     <main className="pt-20">
@@ -69,40 +120,40 @@ export default function ExperienceDetailPage() {
             Retour
           </Button>
           
-          <Badge variant="secondary" className="mb-3">
-            {experience.categoryLabel}
-          </Badge>
+          {experience.destination && (
+            <Badge variant="outline" className="mb-3">
+              <MapPin className="w-3 h-3 mr-1" />
+              {experience.destination.name}
+            </Badge>
+          )}
+          
           <h1 className="font-serif text-3xl md:text-4xl font-bold mb-4">
-            {experience.title}
+            {experience.name}
           </h1>
+          
           <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
             <span className="flex items-center gap-2">
-              <MapPin className="w-4 h-4" />
-              {experience.location}
-            </span>
-            <span className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
-              {experience.duration}
-            </span>
-            <span className="flex items-center gap-2">
-              <Star className="w-4 h-4 text-accent" />
-              {experience.rating}/5
+              {durationText}
             </span>
             <span className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              {experience.groupSize}
+              Max {experience.maxParticipants} personnes
             </span>
           </div>
         </div>
       </section>
 
-      {/* Image Gallery */}
+      {/* Image */}
       <section className="py-8">
         <div className="container mx-auto px-4">
-          <ImageGallery 
-            images={experience.images} 
-            title={experience.title}
-          />
+          <div className="relative h-96 rounded-2xl overflow-hidden shadow-elegant">
+            <img
+              src={experience.mainImage || festivalVodoun}
+              alt={experience.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
         </div>
       </section>
 
@@ -118,82 +169,47 @@ export default function ExperienceDetailPage() {
                 animate={{ opacity: 1, y: 0 }}
               >
                 <h2 className="font-serif text-2xl font-bold mb-4">À propos</h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  {experience.fullDescription}
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                  {experience.description}
                 </p>
               </motion.div>
 
-              {/* Cultural Context */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-secondary p-6 rounded-2xl"
-              >
-                <h2 className="font-serif text-2xl font-bold mb-4">Contexte culturel</h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  {experience.culturalContext}
-                </p>
-              </motion.div>
-
-              {/* Program Flow */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <h2 className="font-serif text-2xl font-bold mb-6">Déroulement</h2>
-                <div className="space-y-4">
-                  {experience.programFlow.map((step, idx) => (
-                    <div key={idx} className="flex gap-4">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
-                        {idx + 1}
-                      </div>
-                      <div className="pt-1">
-                        <p className="text-foreground">{step}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* Includes */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="grid md:grid-cols-2 gap-6"
-              >
-                <div className="bg-nature/5 p-6 rounded-2xl">
+              {/* Ce qui est inclus */}
+              {experience.included && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="bg-nature/5 p-6 rounded-2xl"
+                >
                   <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                     <Check className="w-5 h-5 text-nature" />
-                    Inclus
+                    Ce qui est inclus
                   </h3>
-                  <ul className="space-y-2">
-                    {experience.includes.map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-muted-foreground">
-                        <Check className="w-4 h-4 text-nature mt-1 flex-shrink-0" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                  <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                    {experience.included}
+                  </p>
+                </motion.div>
+              )}
 
-                <div className="bg-destructive/5 p-6 rounded-2xl">
+              {/* Localisation */}
+              {experience.latitude && experience.longitude && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="bg-secondary p-6 rounded-2xl"
+                >
                   <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                    <X className="w-5 h-5 text-destructive" />
-                    Non inclus
+                    <MapPin className="w-5 h-5 text-primary" />
+                    Localisation
                   </h3>
-                  <ul className="space-y-2">
-                    {experience.notIncludes.map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-muted-foreground">
-                        <X className="w-4 h-4 text-destructive mt-1 flex-shrink-0" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </motion.div>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>Latitude: {parseFloat(experience.latitude.toString()).toFixed(4)}</p>
+                    <p>Longitude: {parseFloat(experience.longitude.toString()).toFixed(4)}</p>
+                  </div>
+                </motion.div>
+              )}
             </div>
 
             {/* Sidebar - Booking Card */}
@@ -206,7 +222,7 @@ export default function ExperienceDetailPage() {
               >
                 <div className="text-center mb-6">
                   <span className="text-3xl font-bold text-primary">
-                    {experience.price.toLocaleString()} FCFA
+                    {price.toLocaleString()} FCFA
                   </span>
                   <span className="text-muted-foreground"> / personne</span>
                 </div>
@@ -217,58 +233,47 @@ export default function ExperienceDetailPage() {
                       <Clock className="w-4 h-4" />
                       Durée
                     </span>
-                    <span className="font-medium">{experience.duration}</span>
+                    <span className="font-medium">{durationText}</span>
                   </div>
-                  <div className="flex items-center justify-between py-3 border-b border-border">
-                    <span className="flex items-center gap-2 text-muted-foreground">
-                      <Mountain className="w-4 h-4" />
-                      Difficulté
-                    </span>
-                    <span className="font-medium">{experience.difficulty}</span>
-                  </div>
+                  
                   <div className="flex items-center justify-between py-3 border-b border-border">
                     <span className="flex items-center gap-2 text-muted-foreground">
                       <Users className="w-4 h-4" />
-                      Groupe
+                      Groupe max
                     </span>
-                    <span className="font-medium">{experience.groupSize}</span>
+                    <span className="font-medium">{experience.maxParticipants} pers.</span>
                   </div>
+                  
                   <div className="flex items-center justify-between py-3">
                     <span className="flex items-center gap-2 text-muted-foreground">
                       <Calendar className="w-4 h-4" />
                       Disponibilité
                     </span>
-                    <Badge variant={experience.available ? "default" : "secondary"}>
-                      {experience.available ? "Disponible" : "Indisponible"}
+                    <Badge variant="default">
+                      Disponible
                     </Badge>
                   </div>
                 </div>
 
-                {experience.available ? (
-                  <Button
-                    variant={inCart ? "outline" : "gold"}
-                    size="lg"
-                    className="w-full gap-2"
-                    onClick={handleAddToCart}
-                    disabled={inCart}
-                  >
-                    {inCart ? (
-                      <>
-                        <Check className="w-5 h-5" />
-                        Dans le panier
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingCart className="w-5 h-5" />
-                        Ajouter au panier
-                      </>
-                    )}
-                  </Button>
-                ) : (
-                  <Button variant="outline" size="lg" className="w-full" disabled>
-                    Actuellement indisponible
-                  </Button>
-                )}
+                <Button
+                  variant={inCart ? "outline" : "gold"}
+                  size="lg"
+                  className="w-full gap-2"
+                  onClick={handleAddToCart}
+                  disabled={inCart}
+                >
+                  {inCart ? (
+                    <>
+                      <Check className="w-5 h-5" />
+                      Dans le panier
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="w-5 h-5" />
+                      Ajouter au panier
+                    </>
+                  )}
+                </Button>
 
                 {inCart && (
                   <Link to="/panier" className="block mt-3">
@@ -277,19 +282,20 @@ export default function ExperienceDetailPage() {
                     </Button>
                   </Link>
                 )}
+
+                {experience.destination && experience.destination.slug && (
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <Link to={`/destinations/${experience.destination.slug}`}>
+                      <Button variant="ghost" size="sm" className="w-full gap-2">
+                        <MapPin className="w-4 h-4" />
+                        Découvrir {experience.destination.name}
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </motion.div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Reviews Section */}
-      <section className="py-16 bg-secondary">
-        <div className="container mx-auto px-4">
-          <h2 className="font-serif text-2xl md:text-3xl font-bold mb-8">
-            Avis des voyageurs
-          </h2>
-          <ReviewsDisplay itemId={experience.id} />
         </div>
       </section>
     </main>

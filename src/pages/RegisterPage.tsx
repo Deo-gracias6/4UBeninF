@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Mail, Lock, UserPlus, Loader2, ArrowLeft, Phone, Globe } from 'lucide-react';
+import { User, Mail, Lock, UserPlus, Loader2, ArrowLeft, Phone, Globe, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 
 export default function RegisterPage() {
-  // États pour tous les champs requis par ton API
   const [nom, setNom] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -18,6 +17,9 @@ export default function RegisterPage() {
   const [country, setCountry] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
+  // États pour les erreurs de champs
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  
   const { register } = useUserAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -25,35 +27,63 @@ export default function RegisterPage() {
 
   const from = (location.state as { from?: string })?.from || '/';
 
+  // Validation locale avant envoi
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!nom.trim()) {
+      newErrors.nom = 'Le nom est requis';
+    }
+
+    if (!lastName.trim()) {
+      newErrors.lastName = 'Le prénom est requis';
+    }
+
+    if (!email.trim()) {
+      newErrors.email = 'L\'email est requis';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Format d\'email invalide';
+    }
+
+    if (!password.trim()) {
+      newErrors.password = 'Le mot de passe est requis';
+    } else if (password.length < 8) {
+      newErrors.password = 'Le mot de passe doit contenir au moins 8 caractères';
+    } else if (!/(?=.*[a-z])/.test(password)) {
+      newErrors.password = 'Le mot de passe doit contenir au moins une minuscule';
+    } else if (!/(?=.*[A-Z])/.test(password)) {
+      newErrors.password = 'Le mot de passe doit contenir au moins une majuscule';
+    } else if (!/(?=.*\d)/.test(password)) {
+      newErrors.password = 'Le mot de passe doit contenir au moins un chiffre';
+    }
+
+    if (!confirmPassword.trim()) {
+      newErrors.confirmPassword = 'Veuillez confirmer votre mot de passe';
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
 
-    // Validations
-    if (!nom.trim()) {
-      toast({ title: 'Veuillez entrer votre nom', variant: 'destructive' });
-      return;
-    }
-    if (!lastName.trim()) {
-      toast({ title: 'Veuillez entrer votre prénom', variant: 'destructive' });
-      return;
-    }
-    if (!email.trim()) {
-      toast({ title: 'Veuillez entrer votre email', variant: 'destructive' });
-      return;
-    }
-    if (!password.trim() || password.length < 8) {
-      toast({ title: 'Mot de passe invalide (8 caractères minimum)', variant: 'destructive' });
-      return;
-    }
-    if (password !== confirmPassword) {
-      toast({ title: 'Les mots de passe ne correspondent pas', variant: 'destructive' });
+    // Validation locale
+    if (!validateForm()) {
+      toast({ 
+        title: 'Formulaire incomplet', 
+        description: 'Veuillez corriger les erreurs dans le formulaire',
+        variant: 'destructive' 
+      });
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // Appel à ton API avec les données exactes attendues
       await register({
         email: email.trim(),
         password,
@@ -62,91 +92,118 @@ export default function RegisterPage() {
         last_name: lastName.trim(),
         phone: phone.trim(),
         country: country.trim(),
-        preferred_language: 'fr' // Langue par défaut
+        preferred_language: 'fr'
       });
 
       toast({ 
-        title: 'Compte créé avec succès !', 
-        description: 'Veuillez vous connecter pour continuer.' 
+        title: '✅ Compte créé avec succès !', 
+        description: 'Vous pouvez maintenant vous connecter.',
+        className: 'bg-green-50 border-green-200'
       });
       
-      // Redirection vers la page de connexion avec un message
       navigate('/connexion', { 
-        state: { message: 'Compte créé avec succès. Veuillez vous connecter.' } 
+        state: { email, message: 'Compte créé ! Connectez-vous maintenant.' } 
       });
       
     } catch (error: any) {
-      // Gestion des erreurs de l'API avec détails
-      console.error('Erreur d\'inscription:', error);
+      console.error('❌ Erreur inscription:', error);
       
-      let errorMessage = 'Erreur lors de la création du compte';
-      let errorTitle = 'Erreur';
-      
-      // Essayons d'extraire le message d'erreur de différentes façons
-      if (error.response) {
-        // Si c'est une erreur HTTP avec réponse
-        const data = error.response.data;
-        
-        // Cas 1: Erreur Laravel typique avec champ "message"
-        if (data.message) {
-          errorMessage = data.message;
-        }
-        
-        // Cas 2: Erreurs de validation Laravel (422)
-        if (data.errors) {
-          // Concaténer toutes les erreurs de validation
-          const validationErrors = [];
-          for (const field in data.errors) {
-            if (Array.isArray(data.errors[field])) {
-              validationErrors.push(...data.errors[field]);
-            } else {
-              validationErrors.push(data.errors[field]);
-            }
-          }
-          if (validationErrors.length > 0) {
-            errorMessage = validationErrors.join(', ');
-          }
-        }
-        
-        // Cas 3: Autre structure d'erreur
-        if (data.error) {
-          errorMessage = data.error;
-        }
-        
-        // Ajouter le statut HTTP si disponible
-        if (error.response.status) {
-          errorTitle = `Erreur ${error.response.status}`;
-        }
+      const response = error.response?.data;
+      const status = error.response?.status;
+
+      // Réinitialiser les erreurs
+      const fieldErrors: Record<string, string> = {};
+      let toastTitle = 'Erreur d\'inscription';
+      let toastMessage = 'Une erreur est survenue lors de la création du compte';
+
+      // ✅ Gestion des erreurs par code HTTP
+      if (status === 409) {
+        // Conflit = Email déjà utilisé
+        toastTitle = '📧 Email déjà utilisé';
+        toastMessage = 'Cette adresse email est déjà associée à un compte existant. Essayez de vous connecter ou utilisez un autre email.';
+        fieldErrors.email = 'Cet email est déjà utilisé';
       } 
-      // Cas 4: Erreur réseau ou autre
-      else if (error.message) {
-        errorMessage = error.message;
+      else if (status === 422) {
+        // Erreurs de validation
+        toastTitle = '⚠️ Données invalides';
+        
+        if (response?.errors) {
+          // Erreurs Laravel détaillées par champ
+          const allErrors: string[] = [];
+          
+          for (const field in response.errors) {
+            const messages = Array.isArray(response.errors[field]) 
+              ? response.errors[field] 
+              : [response.errors[field]];
+            
+            // Mapper les noms de champs backend vers frontend
+            const fieldMap: Record<string, string> = {
+              'nom': 'nom',
+              'last_name': 'lastName',
+              'email': 'email',
+              'password': 'password',
+              'password_confirmation': 'confirmPassword',
+              'phone': 'phone',
+              'country': 'country'
+            };
+            
+            const frontendField = fieldMap[field] || field;
+            fieldErrors[frontendField] = messages[0];
+            allErrors.push(`${this.translateField(field)}: ${messages[0]}`);
+          }
+          
+          toastMessage = allErrors.join(' • ');
+        } else if (response?.message) {
+          toastMessage = response.message;
+        }
       }
-      
-      // Afficher un message spécifique pour les emails déjà utilisés
-      if (errorMessage.toLowerCase().includes('email') && 
-          (errorMessage.toLowerCase().includes('already') || 
-           errorMessage.toLowerCase().includes('existe') ||
-           errorMessage.toLowerCase().includes('utilisé'))) {
-        errorTitle = 'Email déjà utilisé';
-        errorMessage = 'Cette adresse email est déjà associée à un compte.';
+      else if (status === 400) {
+        // Mauvaise requête
+        toastTitle = '⚠️ Requête invalide';
+        toastMessage = response?.message || 'Les données envoyées sont invalides';
       }
-      
-      // Afficher un message spécifique pour les mots de passe faibles
-      if (errorMessage.toLowerCase().includes('password') || 
-          errorMessage.toLowerCase().includes('mot de passe')) {
-        errorTitle = 'Mot de passe invalide';
+      else if (status === 500) {
+        // Erreur serveur
+        toastTitle = '🔧 Erreur serveur';
+        toastMessage = 'Une erreur est survenue sur le serveur. Veuillez réessayer plus tard.';
       }
+      else if (!status) {
+        // Erreur réseau
+        toastTitle = '🌐 Erreur de connexion';
+        toastMessage = 'Impossible de contacter le serveur. Vérifiez votre connexion internet.';
+      }
+      else {
+        // Autre erreur
+        toastMessage = response?.message || error.message || toastMessage;
+      }
+
+      // Afficher les erreurs de champs
+      setErrors(fieldErrors);
       
+      // Toast global
       toast({ 
-        title: errorTitle, 
-        description: errorMessage, 
+        title: toastTitle, 
+        description: toastMessage, 
         variant: 'destructive',
-        duration: 5000 // Garder plus longtemps pour lire
+        duration: 6000
       });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Traduction des noms de champs
+  const translateField = (field: string): string => {
+    const translations: Record<string, string> = {
+      'nom': 'Nom',
+      'last_name': 'Prénom',
+      'email': 'Email',
+      'password': 'Mot de passe',
+      'password_confirmation': 'Confirmation',
+      'phone': 'Téléphone',
+      'country': 'Pays'
+    };
+    return translations[field] || field;
   };
 
   return (
@@ -193,6 +250,7 @@ export default function RegisterPage() {
             className="bg-card p-8 rounded-2xl shadow-elegant"
           >
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Nom */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium mb-2">
                   <User className="w-4 h-4 text-primary" />
@@ -201,14 +259,23 @@ export default function RegisterPage() {
                 <Input
                   type="text"
                   value={nom}
-                  onChange={(e) => setNom(e.target.value)}
+                  onChange={(e) => {
+                    setNom(e.target.value);
+                    if (errors.nom) setErrors({ ...errors, nom: '' });
+                  }}
                   placeholder="Dupont"
-                  className="h-12"
+                  className={`h-12 ${errors.nom ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                   disabled={isLoading}
-                  required
                 />
+                {errors.nom && (
+                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {errors.nom}
+                  </p>
+                )}
               </div>
 
+              {/* Prénom */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium mb-2">
                   <User className="w-4 h-4 text-primary" />
@@ -217,14 +284,23 @@ export default function RegisterPage() {
                 <Input
                   type="text"
                   value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
+                  onChange={(e) => {
+                    setLastName(e.target.value);
+                    if (errors.lastName) setErrors({ ...errors, lastName: '' });
+                  }}
                   placeholder="Jean"
-                  className="h-12"
+                  className={`h-12 ${errors.lastName ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                   disabled={isLoading}
-                  required
                 />
+                {errors.lastName && (
+                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {errors.lastName}
+                  </p>
+                )}
               </div>
 
+              {/* Email */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium mb-2">
                   <Mail className="w-4 h-4 text-primary" />
@@ -233,14 +309,23 @@ export default function RegisterPage() {
                 <Input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) setErrors({ ...errors, email: '' });
+                  }}
                   placeholder="votre@email.com"
-                  className="h-12"
+                  className={`h-12 ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                   disabled={isLoading}
-                  required
                 />
+                {errors.email && (
+                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {errors.email}
+                  </p>
+                )}
               </div>
 
+              {/* Téléphone */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium mb-2">
                   <Phone className="w-4 h-4 text-primary" />
@@ -256,6 +341,7 @@ export default function RegisterPage() {
                 />
               </div>
 
+              {/* Pays */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium mb-2">
                   <Globe className="w-4 h-4 text-primary" />
@@ -271,6 +357,7 @@ export default function RegisterPage() {
                 />
               </div>
 
+              {/* Mot de passe */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium mb-2">
                   <Lock className="w-4 h-4 text-primary" />
@@ -279,17 +366,27 @@ export default function RegisterPage() {
                 <Input
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password) setErrors({ ...errors, password: '' });
+                  }}
                   placeholder="••••••••"
-                  className="h-12"
+                  className={`h-12 ${errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                   disabled={isLoading}
-                  required
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Minimum 8 caractères
-                </p>
+                {errors.password ? (
+                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {errors.password}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    8 caractères minimum avec majuscule, minuscule et chiffre
+                  </p>
+                )}
               </div>
 
+              {/* Confirmer mot de passe */}
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium mb-2">
                   <Lock className="w-4 h-4 text-primary" />
@@ -298,12 +395,20 @@ export default function RegisterPage() {
                 <Input
                   type="password"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: '' });
+                  }}
                   placeholder="••••••••"
-                  className="h-12"
+                  className={`h-12 ${errors.confirmPassword ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                   disabled={isLoading}
-                  required
                 />
+                {errors.confirmPassword && (
+                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {errors.confirmPassword}
+                  </p>
+                )}
               </div>
 
               <Button
@@ -316,7 +421,7 @@ export default function RegisterPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Création...
+                    Création en cours...
                   </>
                 ) : (
                   <>

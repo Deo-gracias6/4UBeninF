@@ -11,7 +11,7 @@ import { GlobalSearch } from "@/components/search/GlobalSearch";
 
 const navLinks = [
   { path: "/", label: "Accueil" },
-  { path: "/decouvrir", label: "Découvrir" },
+  // { path: "/decouvrir", label: "Découvrir" },
   { path: "/destinations", label: "Destinations" },
   { path: "/experiences", label: "Expériences" },
   { path: "/festivals", label: "Festivals" },

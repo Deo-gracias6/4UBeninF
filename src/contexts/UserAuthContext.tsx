@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authService } from '../services/authService';
+import api from '../services/api';
 
 export interface UserProfile {
   id: string;
@@ -48,7 +49,56 @@ const UserAuthContext = createContext<UserAuthContextType | undefined>(undefined
 export const UserAuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [trips] = useState<Trip[]>([]);
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(true); // ✅ True au départ
+
+  // ✅ Charger l'utilisateur au montage du composant
+  useEffect(() => {
+    const loadUser = async () => {
+      const token = localStorage.getItem('accessToken');
+      console.log('🔑 Token au chargement:', token ? 'Présent' : 'Absent');
+      
+      if (!token) {
+        console.log('❌ Pas de token, utilisateur non connecté');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        console.log('🔄 Chargement du profil utilisateur...');
+        const response = await api.get('/users/me');
+        console.log('✅ Profil utilisateur chargé:', response.data);
+        
+        const userData = response.data.data || response.data;
+        
+        const userProfile: UserProfile = {
+          id: userData.id,
+          email: userData.email,
+          nom: userData.nom,
+          last_name: userData.last_name || '',
+          phone: userData.phone,
+          country: userData.country,
+          avatar: userData.avatar,
+          preferred_language: userData.preferred_language || 'fr',
+          role: userData.role || 'user',
+          created_at: userData.created_at || new Date().toISOString(),
+        };
+        
+        setUser(userProfile);
+        console.log('✅ Utilisateur connecté:', userProfile.email);
+        
+      } catch (error: any) {
+        console.error('❌ Erreur chargement utilisateur:', error.message);
+        // Token invalide ou expiré, on nettoie
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUser();
+  }, []);
 
   const login = async (email: string, password: string): Promise<void> => {
     try {
@@ -64,11 +114,12 @@ export const UserAuthProvider = ({ children }: { children: ReactNode }) => {
         country: response.data.user.country,
         avatar: response.data.user.avatar,
         preferred_language: response.data.user.preferred_language || 'fr',
-        role: response.data.user.role,
+        role: response.data.user.role || 'user',
         created_at: response.data.user.created_at || new Date().toISOString(),
       };
       
       setUser(userProfile);
+      console.log('✅ Connexion réussie:', userProfile.email);
       
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Erreur de connexion';
@@ -88,8 +139,11 @@ export const UserAuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async (): Promise<void> => {
     try {
       await authService.logout();
+    } catch (error) {
+      console.error('Erreur lors du logout:', error);
     } finally {
       setUser(null);
+      console.log('✅ Déconnexion réussie');
     }
   };
 
@@ -100,6 +154,18 @@ export const UserAuthProvider = ({ children }: { children: ReactNode }) => {
     }
     return false;
   };
+
+  // ✅ Afficher un loader pendant le chargement initial
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <UserAuthContext.Provider

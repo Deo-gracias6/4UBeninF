@@ -1,113 +1,59 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { MapPin, Clock, Search, Filter, ArrowRight } from "lucide-react";
+import { MapPin, Search, Filter, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import cotonouCity from "@/assets/cotonou-city.jpg";
-import ganvieVillage from "@/assets/ganvie-village.jpg";
-import pendjariPark from "@/assets/pendjari-park.jpg";
-import ouidahDoor from "@/assets/ouidah-door.jpg";
-
-const destinations = [
-  {
-    id: 1,
-    name: "Cotonou",
-    region: "Littoral",
-    image: cotonouCity,
-    description: "La vibrante capitale économique du Bénin. Marchés colorés, plages et vie nocturne.",
-    pricePerDay: 45000,
-    recommendedDays: 2,
-    highlights: ["Marché Dantokpa", "Fondation Zinsou", "Plage de Fidjrossè"],
-  },
-  {
-    id: 2,
-    name: "Ganvié",
-    region: "Atlantique",
-    image: ganvieVillage,
-    description: "La Venise de l'Afrique. Village lacustre unique au monde avec ses maisons sur pilotis.",
-    pricePerDay: 35000,
-    recommendedDays: 1,
-    highlights: ["Marché flottant", "Artisanat local", "Pêche traditionnelle"],
-  },
-  {
-    id: 3,
-    name: "Parc de la Pendjari",
-    region: "Atacora",
-    image: pendjariPark,
-    description: "Safari exceptionnel au cœur de l'Afrique de l'Ouest. Lions, éléphants et paysages grandioses.",
-    pricePerDay: 85000,
-    recommendedDays: 3,
-    highlights: ["Safari 4x4", "Cascades de Tanougou", "Nuit en lodge"],
-  },
-  {
-    id: 4,
-    name: "Ouidah",
-    region: "Atlantique",
-    image: ouidahDoor,
-    description: "Ville historique et spirituelle. Berceau du vodoun et mémoire de la traite négrière.",
-    pricePerDay: 30000,
-    recommendedDays: 1,
-    highlights: ["Route des Esclaves", "Temple des Pythons", "Porte du Non-Retour"],
-  },
-  {
-    id: 5,
-    name: "Porto-Novo",
-    region: "Ouémé",
-    image: cotonouCity,
-    description: "Capitale administrative aux influences afro-brésiliennes. Architecture coloniale unique.",
-    pricePerDay: 35000,
-    recommendedDays: 2,
-    highlights: ["Musée da Silva", "Palais du Roi", "Jardin des Plantes"],
-  },
-  {
-    id: 6,
-    name: "Abomey",
-    region: "Zou",
-    image: ouidahDoor,
-    description: "Ancienne capitale du puissant royaume du Dahomey. Palais royaux classés UNESCO.",
-    pricePerDay: 40000,
-    recommendedDays: 2,
-    highlights: ["Palais Royaux", "Musée Historique", "Artisanat Bronze"],
-  },
-  {
-    id: 7,
-    name: "Grand-Popo",
-    region: "Mono",
-    image: ganvieVillage,
-    description: "Station balnéaire paisible. Plages préservées et lagunes mystérieuses.",
-    pricePerDay: 40000,
-    recommendedDays: 2,
-    highlights: ["Plage de Grand-Popo", "Bouche du Roy", "Écolodges"],
-  },
-  {
-    id: 8,
-    name: "Natitingou",
-    region: "Atacora",
-    image: pendjariPark,
-    description: "Porte d'entrée du parc Pendjari. Montagnes de l'Atacora et villages Somba.",
-    pricePerDay: 50000,
-    recommendedDays: 2,
-    highlights: ["Tatas Somba", "Chutes de Kota", "Artisanat Otammari"],
-  },
-];
 
 const regions = ["Toutes", "Littoral", "Atlantique", "Atacora", "Ouémé", "Zou", "Mono"];
 
 export default function DestinationsPage() {
+  const [destinations, setDestinations] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("Toutes");
 
+  //  Charger depuis backend
+  useEffect(() => {
+  fetch("http://localhost:5000/api/destinations")
+    .then(res => res.json())
+    .then(result => {
+      console.log("API:", result);
+
+      if (result.success) {
+        setDestinations(result.data.destinations);
+      } else {
+        console.error("API error:", result);
+      }
+
+      setLoading(false);
+    })
+    .catch(err => {
+      console.error("Erreur chargement destinations:", err);
+      setLoading(false);
+    });
+}, []);
+
+  // 🔥 Filtrage
   const filteredDestinations = destinations.filter((dest) => {
-    const matchesSearch = dest.name.toLowerCase().includes(search.toLowerCase()) ||
-      dest.description.toLowerCase().includes(search.toLowerCase());
-    const matchesRegion = selectedRegion === "Toutes" || dest.region === selectedRegion;
+    const matchesSearch =
+      dest.name?.toLowerCase().includes(search.toLowerCase()) ||
+      dest.description?.toLowerCase().includes(search.toLowerCase());
+
+    const matchesRegion =
+      selectedRegion === "Toutes" || dest.region === selectedRegion;
+
     return matchesSearch && matchesRegion;
   });
 
+  if (loading) {
+    return <div className="text-center py-20">Chargement des destinations...</div>;
+  }
+
   return (
     <main className="pt-20">
-      {/* Hero */}
+      {/* HERO */}
       <section className="relative py-20 overflow-hidden bg-secondary">
         <div className="container mx-auto px-4">
           <motion.div
@@ -126,7 +72,7 @@ export default function DestinationsPage() {
             </p>
           </motion.div>
 
-          {/* Search and Filter */}
+          {/* SEARCH + FILTER */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -143,6 +89,7 @@ export default function DestinationsPage() {
                   className="pl-10 h-12 bg-secondary border-0"
                 />
               </div>
+
               <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
                 <Filter className="w-5 h-5 text-muted-foreground shrink-0" />
                 {regions.map((region) => (
@@ -164,82 +111,57 @@ export default function DestinationsPage() {
         </div>
       </section>
 
-      {/* Destinations Grid */}
+      {/* GRID */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredDestinations.map((dest, idx) => (
-              <motion.div
-                key={dest.id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                whileHover={{ y: -8 }}
-                className="group bg-card rounded-2xl overflow-hidden shadow-elegant hover:shadow-lg transition-all"
-              >
-                <div className="relative h-52 overflow-hidden">
-                  <img
-                    src={dest.image}
-                    alt={dest.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <div className="flex items-center gap-1 text-white/80 text-sm mb-1">
-                      <MapPin className="w-4 h-4" />
-                      {dest.region}
-                    </div>
-                    <h3 className="font-serif text-xl font-semibold text-white">
-                      {dest.name}
-                    </h3>
-                  </div>
-                </div>
-
-                <div className="p-5">
-                  <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
-                    {dest.description}
-                  </p>
-
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {dest.highlights.slice(0, 2).map((h, i) => (
-                      <span
-                        key={i}
-                        className="px-2 py-1 rounded-full text-xs bg-secondary text-secondary-foreground"
-                      >
-                        {h}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <span className="text-lg font-bold text-primary">
-                        {dest.pricePerDay.toLocaleString()} FCFA
-                      </span>
-                      <span className="text-muted-foreground text-sm">/jour</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Clock className="w-4 h-4" />
-                      {dest.recommendedDays} jour{dest.recommendedDays > 1 ? "s" : ""}
-                    </div>
-                  </div>
-
-                  <Link to={`/decouvrir/${dest.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-")}`}>
-                    <Button className="w-full gap-2">
-                      Découvrir
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </Link>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {filteredDestinations.length === 0 && (
+          {filteredDestinations.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">
-                Aucune destination trouvée pour votre recherche.
+                Aucune destination trouvée.
               </p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredDestinations.map((dest, idx) => (
+                <motion.div
+                  key={dest.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  whileHover={{ y: -8 }}
+                  className="group bg-card rounded-2xl overflow-hidden shadow-elegant hover:shadow-lg transition-all"
+                >
+                  <div className="relative h-52 overflow-hidden">
+                    <img
+                      src={dest.bannerImage || cotonouCity}
+                      alt={dest.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent" />
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <div className="flex items-center gap-1 text-white/80 text-sm mb-1">
+                        <MapPin className="w-4 h-4" />
+                        {dest.region}
+                      </div>
+                      <h3 className="font-serif text-xl font-semibold text-white">
+                        {dest.name}
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="p-5">
+                    <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                      {dest.description}
+                    </p>
+                <Link to={`/destinations/${dest.slug}`}>
+                  <Button className="w-full gap-2">
+                    Découvrir
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           )}
         </div>

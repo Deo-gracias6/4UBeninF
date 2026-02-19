@@ -1,35 +1,102 @@
+import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useState } from "react";
 import { 
   ArrowLeft, 
-  Clock, 
-  MapPin, 
-  Calendar,
-  Check,
-  Info,
-  Sparkles
+  Calendar, 
+  MapPin,
+  Clock,
+  Loader2,
+  ShoppingCart,
+  Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
-import { festivals } from "@/data/festivalsData";
-import { FestivalPackModal, FestivalPack } from "@/components/festivals/FestivalPackModal";
-import { ImageGallery } from "@/components/gallery/ImageGallery";
+import festivalService, { Festival } from "@/services/festivalService";
+
+// Fallback image
+import festivalVodoun from "@/assets/festival-vodoun.jpg";
 
 export default function FestivalDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { addItem, isInCart } = useCart();
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const festival = festivals.find((f) => f.id === id);
+  const [festival, setFestival] = useState<Festival | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  if (!festival) {
+  useEffect(() => {
+    const loadData = async () => {
+      if (!slug) return;
+
+      try {
+        setLoading(true);
+        console.log('🎉 Chargement festival:', slug);
+
+        // Charger tous les festivals et trouver par slug
+        const allFestivals = await festivalService.getAll();
+        console.log('🎉 Festivals:', allFestivals);
+
+        const found = allFestivals.find((f) => f.slug === slug);
+        console.log('✅ Festival trouvé:', found);
+
+        if (!found) {
+          setError(true);
+          return;
+        }
+
+        setFestival(found);
+
+      } catch (err: any) {
+        console.error('❌ Erreur:', err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [slug]);
+
+  const handleAddToCart = () => {
+    if (!festival) return;
+
+    const price = parseFloat(festival.price) || 0;
+    const startDate = new Date(festival.start_date);
+    const formattedDate = startDate.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long'
+    });
+
+    addItem({
+      id: festival.id.toString(),
+      type: "festival",
+      name: festival.name,
+      price: price,
+      image: festival.main_image || undefined,
+      dates: formattedDate,
+      city: "Cotonou",
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center pt-20">
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error || !festival) {
     return (
       <main className="pt-20 min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="font-serif text-2xl font-bold mb-4">Festival non trouvé</h1>
+          <p className="text-muted-foreground mb-4">
+            Le festival "{slug}" n'existe pas.
+          </p>
           <Link to="/festivals">
             <Button variant="outline">Retour aux festivals</Button>
           </Link>
@@ -38,30 +105,28 @@ export default function FestivalDetailPage() {
     );
   }
 
-  const handleSelectPack = (festivalData: typeof festival, pack: FestivalPack) => {
-    addItem({
-      id: `${festivalData.id}-${pack.type}`,
-      type: "festival",
-      name: festivalData.name,
-      price: pack.price,
-      image: festivalData.image,
-      dates: festivalData.dates,
-      city: festivalData.city,
-      duration: festivalData.duration,
-      packType: pack.type,
-      packName: pack.name,
-      packFeatures: pack.features,
-    });
-  };
+  const price = parseFloat(festival.price) || 0;
+  const startDate = new Date(festival.start_date);
+  const endDate = new Date(festival.end_date);
+  const formattedStartDate = startDate.toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+  const formattedEndDate = endDate.toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+  const durationDays = Math.ceil(
+    (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+  ) + 1;
 
-  const hasPackInCart = 
-    isInCart(`${festival.id}-standard`) ||
-    isInCart(`${festival.id}-premium`) ||
-    isInCart(`${festival.id}-vip`);
+  const inCart = isInCart(festival.id.toString());
 
   return (
     <main className="pt-20">
-      {/* Header with Back Button */}
+      {/* Header */}
       <section className="bg-secondary py-6">
         <div className="container mx-auto px-4">
           <Button
@@ -73,41 +138,45 @@ export default function FestivalDetailPage() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour
           </Button>
-          
+
           <div className="flex flex-wrap gap-2 mb-3">
-            {festival.highlights.map((highlight, idx) => (
-              <Badge key={idx} variant="secondary" className="bg-accent/20 text-accent border-accent/30">
-                {highlight}
-              </Badge>
-            ))}
+            <Badge variant="secondary" className="bg-accent/20 text-accent border-accent/30">
+              Festival
+            </Badge>
           </div>
+
           <h1 className="font-serif text-3xl md:text-4xl font-bold mb-4">
             {festival.name}
           </h1>
+
           <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
             <span className="flex items-center gap-2">
               <MapPin className="w-4 h-4" />
-              {festival.city}
+              Cotonou
             </span>
             <span className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              {festival.dates}
+              {formattedStartDate} → {formattedEndDate}
             </span>
             <span className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
-              {festival.duration}
+              {durationDays} jour{durationDays > 1 ? 's' : ''}
             </span>
           </div>
         </div>
       </section>
 
-      {/* Image Gallery */}
+      {/* Image */}
       <section className="py-8">
         <div className="container mx-auto px-4">
-          <ImageGallery 
-            images={festival.images} 
-            title={festival.name}
-          />
+          <div className="relative h-96 rounded-2xl overflow-hidden shadow-elegant">
+            <img
+              src={festival.main_image || festivalVodoun}
+              alt={festival.name}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-foreground/50 to-transparent" />
+          </div>
         </div>
       </section>
 
@@ -123,96 +192,13 @@ export default function FestivalDetailPage() {
                 animate={{ opacity: 1, y: 0 }}
               >
                 <h2 className="font-serif text-2xl font-bold mb-4">Présentation</h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  {festival.fullDescription}
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                  {festival.description}
                 </p>
-              </motion.div>
-
-              {/* Cultural Context */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-secondary p-6 rounded-2xl"
-              >
-                <h2 className="font-serif text-2xl font-bold mb-4">Contexte historique & culturel</h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  {festival.culturalContext}
-                </p>
-              </motion.div>
-
-              {/* Program */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <h2 className="font-serif text-2xl font-bold mb-6">Programme</h2>
-                <div className="space-y-6">
-                  {festival.program.map((day, dayIdx) => (
-                    <div key={dayIdx} className="bg-card border border-border rounded-2xl p-6">
-                      <h3 className="font-semibold text-lg text-primary mb-4">{day.day}</h3>
-                      <ul className="space-y-3">
-                        {day.events.map((event, eventIdx) => (
-                          <li key={eventIdx} className="flex items-start gap-3">
-                            <div className="w-2 h-2 rounded-full bg-accent mt-2 flex-shrink-0" />
-                            <span className="text-muted-foreground">{event}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* Practical Info */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <h2 className="font-serif text-2xl font-bold mb-6">Informations pratiques</h2>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="bg-muted p-5 rounded-xl">
-                    <h4 className="font-medium mb-2 flex items-center gap-2">
-                      <Info className="w-4 h-4 text-primary" />
-                      Meilleur moment
-                    </h4>
-                    <p className="text-sm text-muted-foreground">{festival.practicalInfo.bestTime}</p>
-                  </div>
-                  
-                  <div className="bg-muted p-5 rounded-xl">
-                    <h4 className="font-medium mb-2 flex items-center gap-2">
-                      <Info className="w-4 h-4 text-primary" />
-                      Tenue vestimentaire
-                    </h4>
-                    <p className="text-sm text-muted-foreground">{festival.practicalInfo.dresscode}</p>
-                  </div>
-
-                  <div className="bg-muted p-5 rounded-xl">
-                    <h4 className="font-medium mb-2 flex items-center gap-2">
-                      <Info className="w-4 h-4 text-primary" />
-                      Accessibilité
-                    </h4>
-                    <p className="text-sm text-muted-foreground">{festival.practicalInfo.accessibility}</p>
-                  </div>
-
-                  <div className="bg-muted p-5 rounded-xl">
-                    <h4 className="font-medium mb-3">À apporter</h4>
-                    <ul className="space-y-1">
-                      {festival.practicalInfo.whatToBring.map((item, idx) => (
-                        <li key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Check className="w-3 h-3 text-nature" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
               </motion.div>
             </div>
 
-            {/* Sidebar - Booking Card */}
+            {/* Sidebar */}
             <div className="lg:col-span-1">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -221,68 +207,69 @@ export default function FestivalDetailPage() {
                 className="sticky top-24 bg-card border border-border rounded-2xl p-6 shadow-elegant"
               >
                 <div className="text-center mb-6">
-                  <span className="text-sm text-muted-foreground">À partir de</span>
+                  <span className="text-sm text-muted-foreground">Prix d'entrée</span>
                   <div className="text-3xl font-bold text-primary">
-                    75 000 FCFA
+                    {price.toLocaleString()} FCFA
                   </div>
-                  <span className="text-sm text-muted-foreground">Pack Standard</span>
                 </div>
 
                 <div className="space-y-4 mb-6">
                   <div className="flex items-center justify-between py-3 border-b border-border">
                     <span className="flex items-center gap-2 text-muted-foreground">
                       <Calendar className="w-4 h-4" />
-                      Date
+                      Début
                     </span>
-                    <span className="font-medium">{festival.dates}</span>
+                    <span className="font-medium text-sm">
+                      {startDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between py-3 border-b border-border">
                     <span className="flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="w-4 h-4" />
-                      Lieu
+                      <Calendar className="w-4 h-4" />
+                      Fin
                     </span>
-                    <span className="font-medium">{festival.city}</span>
+                    <span className="font-medium text-sm">
+                      {endDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+                    </span>
                   </div>
-                  <div className="flex items-center justify-between py-3">
+                  <div className="flex items-center justify-between py-3 border-b border-border">
                     <span className="flex items-center gap-2 text-muted-foreground">
                       <Clock className="w-4 h-4" />
                       Durée
                     </span>
-                    <span className="font-medium">{festival.duration}</span>
+                    <span className="font-medium">{durationDays} jours</span>
+                  </div>
+                  <div className="flex items-center justify-between py-3">
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="w-4 h-4" />
+                      Lieu
+                    </span>
+                    <span className="font-medium">Cotonou</span>
                   </div>
                 </div>
 
-                <div className="bg-accent/10 p-4 rounded-xl mb-6">
-                  <h4 className="font-medium text-sm mb-2">3 packs disponibles :</h4>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• <strong>Standard</strong> – Essentiel</li>
-                    <li>• <strong>Premium</strong> – Confort +</li>
-                    <li>• <strong>VIP</strong> – Expérience exclusive</li>
-                  </ul>
-                </div>
-
                 <Button
-                  variant={hasPackInCart ? "outline" : "gold"}
+                  variant={inCart ? "outline" : "gold"}
                   size="lg"
-                  className="w-full gap-2"
-                  onClick={() => setIsModalOpen(true)}
-                  disabled={hasPackInCart}
+                  className="w-full gap-2 mb-3"
+                  onClick={handleAddToCart}
+                  disabled={inCart}
                 >
-                  {hasPackInCart ? (
+                  {inCart ? (
                     <>
                       <Check className="w-5 h-5" />
-                      Pack dans le panier
+                      Dans le panier
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-5 h-5" />
-                      Choisir mon pack
+                      <ShoppingCart className="w-5 h-5" />
+                      Ajouter au panier
                     </>
                   )}
                 </Button>
 
-                {hasPackInCart && (
-                  <Link to="/panier" className="block mt-3">
+                {inCart && (
+                  <Link to="/panier" className="block">
                     <Button variant="default" size="lg" className="w-full">
                       Voir le panier
                     </Button>
@@ -293,14 +280,6 @@ export default function FestivalDetailPage() {
           </div>
         </div>
       </section>
-
-      {/* Festival Pack Modal */}
-      <FestivalPackModal
-        festival={festival}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSelectPack={handleSelectPack}
-      />
     </main>
   );
 }
