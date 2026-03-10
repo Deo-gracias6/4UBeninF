@@ -221,6 +221,7 @@ useEffect(() => {
             <p className="text-center text-muted-foreground py-12">Aucune expérience disponible.</p>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              
               {experiences.map((exp, idx) => {
                 const price = parseFloat(exp.price) || 0;
                 // ✅ camelCase : durationMinutes, maxParticipants, mainImage

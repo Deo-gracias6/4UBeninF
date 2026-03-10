@@ -5,17 +5,21 @@ import {
   ArrowLeft, 
   Clock, 
   MapPin, 
-  Star, 
   Users, 
   Check, 
-  ShoppingCart,
   Calendar,
-  Loader2
+  Loader2,
+  Plus,
+  Minus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useCart } from "@/contexts/CartContext";
+import { useUserAuth } from "@/contexts/UserAuthContext";
+import { useToast } from "@/hooks/use-toast";
 import experienceService, { ExperienceDetail } from "@/services/experienceService";
+import api from "@/services/api";
+import { format, addDays } from "date-fns";
+import { fr } from "date-fns/locale";
 
 // Images de fallback
 import festivalVodoun from "@/assets/festival-vodoun.jpg";
@@ -23,11 +27,17 @@ import festivalVodoun from "@/assets/festival-vodoun.jpg";
 export default function ExperienceDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { addItem, isInCart } = useCart();
+  const { user } = useUserAuth();
+  const { toast } = useToast();
   
   const [experience, setExperience] = useState<ExperienceDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  
+  // États pour la réservation
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [participants, setParticipants] = useState(1);
+  const [isReserving, setIsReserving] = useState(false);
 
   useEffect(() => {
     const loadExperience = async () => {
@@ -39,10 +49,11 @@ export default function ExperienceDetailPage() {
         const data = await experienceService.getBySlug(slug);
         console.log('✅ Expérience chargée:', data);
         setExperience(data);
+        
+        // Initialiser la date par défaut (demain)
+        setSelectedDate(addDays(new Date(), 1));
       } catch (err: any) {
         console.error('❌ Erreur chargement expérience:', err);
-        console.error('❌ Message:', err.message);
-        console.error('❌ Response:', err.response?.data);
         setError(true);
       } finally {
         setLoading(false);
@@ -52,21 +63,64 @@ export default function ExperienceDetailPage() {
     loadExperience();
   }, [slug]);
 
-  const handleAddToCart = () => {
+  const handleReservation = async () => {
+    if (!user) {
+      toast({
+        title: "Connexion requise",
+        description: "Veuillez vous connecter pour réserver.",
+        variant: "destructive",
+      });
+      navigate('/connexion');
+      return;
+    }
+
+    if (!selectedDate) {
+      toast({
+        title: "Date manquante",
+        description: "Veuillez sélectionner une date.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!experience) return;
-    
-    const price = typeof experience.price === 'string' 
-      ? parseFloat(experience.price) 
-      : experience.price;
-    
-    addItem({
-      id: experience.id,
-      type: "experience",
-      name: experience.name,
-      price: price,
-      image: experience.mainImage || undefined,
-    });
+
+    try {
+      setIsReserving(true);
+
+      // Créer la réservation
+      const response = await api.post('/bookings', {
+        booking_type: 'experience',
+        item_id: experience.id,
+        start_date: format(selectedDate, 'yyyy-MM-dd'),
+        participants: participants,
+        notes: ''
+      });
+
+      const booking = response.data.data?.booking || response.data.booking || response.data;
+
+      toast({
+  title: "Réservation enregistrée",
+  description: "Votre réservation a été créée avec succès. Vous avez 24h pour payer.",
+});
+
+// Rediriger vers mes réservations
+navigate('/mes-reservations');
+
+    } catch (error: any) {
+      console.error('❌ Erreur réservation:', error);
+      toast({
+        title: "Échec de la réservation",
+        description: error.response?.data?.message || "Une erreur est survenue.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsReserving(false);
+    }
   };
+
+  // Générer les 30 prochains jours pour le sélecteur
+  const availableDates = Array.from({ length: 30 }, (_, i) => addDays(new Date(), i + 1));
 
   if (loading) {
     return (
@@ -96,9 +150,6 @@ export default function ExperienceDetailPage() {
     ? parseFloat(experience.price) 
     : experience.price;
     
-  const inCart = isInCart(experience.id);
-  
-  // ✅ Utilise durationMinutes (camelCase comme le backend)
   const hours = Math.floor(experience.durationMinutes / 60);
   const minutes = experience.durationMinutes % 60;
   const durationText = hours > 0 
@@ -243,44 +294,78 @@ export default function ExperienceDetailPage() {
                     </span>
                     <span className="font-medium">{experience.maxParticipants} pers.</span>
                   </div>
-                  
-                  <div className="flex items-center justify-between py-3">
-                    <span className="flex items-center gap-2 text-muted-foreground">
-                      <Calendar className="w-4 h-4" />
-                      Disponibilité
+                </div>
+
+                {/* Sélecteur de date */}
+                <div className="mb-6">
+                  <label className="text-sm font-medium mb-2 block">Choisir une date</label>
+                  <select
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background"
+                    value={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}
+                    onChange={(e) => setSelectedDate(new Date(e.target.value))}
+                  >
+                    {availableDates.map((date) => (
+                      <option key={date.toISOString()} value={format(date, 'yyyy-MM-dd')}>
+                        {format(date, 'EEEE dd MMMM yyyy', { locale: fr })}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Sélecteur de participants */}
+                <div className="mb-6">
+                  <label className="text-sm font-medium mb-2 block">Nombre de participants</label>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setParticipants(Math.max(1, participants - 1))}
+                      disabled={participants <= 1}
+                    >
+                      <Minus className="w-4 h-4" />
+                    </Button>
+                    <span className="text-xl font-semibold w-12 text-center">{participants}</span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setParticipants(Math.min(experience.maxParticipants, participants + 1))}
+                      disabled={participants >= experience.maxParticipants}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="text-right mt-2 text-sm text-muted-foreground">
+                    Total: <span className="font-semibold text-foreground">
+                      {(price * participants).toLocaleString()} FCFA
                     </span>
-                    <Badge variant="default">
-                      Disponible
-                    </Badge>
                   </div>
                 </div>
 
+                {/* Bouton Réserver */}
                 <Button
-                  variant={inCart ? "outline" : "gold"}
+                  variant="default"
                   size="lg"
                   className="w-full gap-2"
-                  onClick={handleAddToCart}
-                  disabled={inCart}
+                  onClick={handleReservation}
+                  disabled={isReserving}
                 >
-                  {inCart ? (
+                  {isReserving ? (
                     <>
-                      <Check className="w-5 h-5" />
-                      Dans le panier
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Réservation...
                     </>
                   ) : (
                     <>
-                      <ShoppingCart className="w-5 h-5" />
-                      Ajouter au panier
+                      <Calendar className="w-5 h-5" />
+                      Réserver
                     </>
                   )}
                 </Button>
 
-                {inCart && (
-                  <Link to="/panier" className="block mt-3">
-                    <Button variant="default" size="lg" className="w-full">
-                      Voir le panier
-                    </Button>
-                  </Link>
+                {!user && (
+                  <p className="text-xs text-muted-foreground text-center mt-3">
+                    Connexion requise pour réserver
+                  </p>
                 )}
 
                 {experience.destination && experience.destination.slug && (

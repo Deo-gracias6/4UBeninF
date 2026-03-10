@@ -8,10 +8,10 @@ import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { UserMenu } from "./UserMenu";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
+import logo4UBENIN from "@/assets/4UBENIN.png";
 
 const navLinks = [
   { path: "/", label: "Accueil" },
-  // { path: "/decouvrir", label: "Découvrir" },
   { path: "/destinations", label: "Destinations" },
   { path: "/experiences", label: "Expériences" },
   { path: "/festivals", label: "Festivals" },
@@ -27,7 +27,6 @@ export function Navbar() {
   const { itemCount, totalPrice } = useCart();
   const { itemCount: wishlistCount } = useWishlist();
 
-  // Determine if this page has a dark hero (homepage only)
   const isHomePage = location.pathname === "/";
   const hasDarkHero = isHomePage;
 
@@ -40,8 +39,6 @@ export function Navbar() {
   }, []);
 
   const isActive = (path: string) => location.pathname === path;
-
-  // Determine text colors based on page and scroll state
   const shouldUseLightText = hasDarkHero && !isScrolled;
 
   return (
@@ -58,14 +55,11 @@ export function Navbar() {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-lg transition-all group-hover:scale-105 gradient-hero`}>
-              <span className="text-white font-bold text-lg">4U</span>
-            </div>
-            <span className={`font-serif text-xl font-semibold transition-colors ${
-              shouldUseLightText ? "text-white" : "text-foreground"
-            }`}>
-              4UBENIN
-            </span>
+            <img 
+              src={logo4UBENIN} 
+              alt="4U BENIN Logo" 
+              className="h-16 w-auto transition-transform group-hover:scale-105"
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -91,7 +85,6 @@ export function Navbar() {
 
           {/* Wishlist, Cart & Auth */}
           <div className="hidden lg:flex items-center gap-2">
-
             {/* Wishlist Icon */}
             <Link to="/wishlist">
               <Button
@@ -111,7 +104,6 @@ export function Navbar() {
                 )}
               </Button>
             </Link>
-            
 
             {/* Cart Icon */}
             {itemCount > 0 && (

@@ -1,35 +1,62 @@
-import { useState, useEffect, useMemo } from "react";
-import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   Calendar as CalendarIcon, 
   ChevronLeft, 
-  Sparkles, 
-  ShoppingCart, 
-  Check,
+  Sparkles,
   Loader2,
   MapPin,
-  Eye
+  Eye,
+  X,
+  Users,
+  Star,
+  Gift,
+  Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCart } from "@/contexts/CartContext";
+import { Badge } from "@/components/ui/badge";
+import { useUserAuth } from "@/contexts/UserAuthContext";
+import { useToast } from "@/hooks/use-toast";
 import festivalService, { Festival } from "@/services/festivalService";
+import api from "@/services/api";
 
 // Images de fallback
 import festivalVodoun from "@/assets/festival-vodoun.jpg";
-
 
 const months = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
 ];
 
+interface FestivalPack {
+  id: string;
+  nom: string;
+  description: string;
+  prix: number;
+  festival_id: string;
+  dates?: string;
+  lieu?: string;
+  nombre_places?: number;
+  statut: string;
+  accommodation?: string;
+  experiences?: string[];
+}
+
 export default function FestivalsPage() {
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [festivals, setFestivals] = useState<Festival[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const { addItem, isInCart, totalPrice, itemCount } = useCart();
+  // Modale des packs
+  const [selectedFestival, setSelectedFestival] = useState<Festival | null>(null);
+  const [festivalPacks, setFestivalPacks] = useState<FestivalPack[]>([]);
+  const [loadingPacks, setLoadingPacks] = useState(false);
+  const [reservedPacks, setReservedPacks] = useState<Set<string>>(new Set());
+  
+  const { user } = useUserAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Charger les festivals
   useEffect(() => {
@@ -50,19 +77,15 @@ export default function FestivalsPage() {
   }, []);
 
   // Filtrer les festivals
-  const filteredFestivals = useMemo(() => {
-    return festivals.filter((f) => {
-      // Filtre par mois
-      if (selectedMonth !== null) {
-        const festivalMonth = new Date(f.start_date).getMonth();
-        if (festivalMonth !== selectedMonth) {
-          return false;
-        }
+  const filteredFestivals = festivals.filter((f) => {
+    if (selectedMonth !== null) {
+      const festivalMonth = new Date(f.start_date).getMonth();
+      if (festivalMonth !== selectedMonth) {
+        return false;
       }
-
-      return true;
-    });
-  }, [selectedMonth, festivals]);
+    }
+    return true;
+  });
 
   // Grouper festivals par mois pour le calendrier
   const festivalsByMonth = months.map((month, idx) => ({
@@ -70,23 +93,102 @@ export default function FestivalsPage() {
     count: festivals.filter((f) => new Date(f.start_date).getMonth() === idx).length,
   }));
 
-  const handleAddToCart = (festival: Festival) => {
-    const price = parseFloat(festival.price) || 0;
-    const startDate = new Date(festival.start_date);
-    const formattedDate = startDate.toLocaleDateString('fr-FR', { 
-      day: 'numeric', 
-      month: 'long' 
-    });
+  // Ouvrir la modale et charger les packs
+  const handleViewPacks = async (festival: Festival) => {
+    setSelectedFestival(festival);
+    setLoadingPacks(true);
+    
+    try {
+      const response = await api.get(`/festivals-packs/festival/${festival.id}`);
+      const packs = response.data || [];
+      console.log('📦 Packs du festival:', packs);
+      setFestivalPacks(packs);
+    } catch (error) {
+      console.error('❌ Erreur chargement packs:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les packs disponibles.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPacks(false);
+    }
+  };
 
-    addItem({
-      id: festival.id.toString(),
-      type: "festival",
-      name: festival.name,
-      price: price,
-      image: festival.main_image || undefined,
-      dates: formattedDate,
-      city: "Cotonou",
-    });
+  // Fermer la modale
+  const handleCloseModal = () => {
+    setSelectedFestival(null);
+    setFestivalPacks([]);
+  };
+
+  // Réserver un pack
+  const handleReservePack = async (pack: FestivalPack) => {
+    if (!user) {
+      toast({
+        title: "Connexion requise",
+        description: "Veuillez vous connecter pour réserver.",
+        variant: "destructive",
+      });
+      navigate('/connexion');
+      return;
+    }
+
+    try {
+      const response = await api.post('/bookings', {
+        booking_type: 'festival_pack',
+        item_id: pack.id,
+        start_date: pack.dates || selectedFestival?.start_date || new Date().toISOString().split('T')[0],
+        participants: 1,
+        notes: ''
+      });
+
+      const booking = response.data.data?.booking || response.data.booking || response.data;
+
+      setReservedPacks(prev => new Set(prev).add(pack.id));
+
+      toast({
+        title: "Réservation enregistrée",
+        description: "Vous allez être redirigé vers le paiement.",
+      });
+
+      handleCloseModal();
+      navigate(`/paiement/${booking.id}`);
+
+    } catch (error: any) {
+      console.error('Erreur réservation:', error);
+      toast({
+        title: "Échec de la réservation",
+        description: error.response?.data?.message || "Une erreur est survenue.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Déterminer le niveau du pack
+  const getPackLevel = (nom: string): { label: string; color: string; icon: React.ReactNode } => {
+    const lowerName = nom.toLowerCase();
+    
+    if (lowerName.includes('vip') || lowerName.includes('luxe') || lowerName.includes('prestige')) {
+      return {
+        label: 'VIP',
+        color: 'bg-gradient-to-r from-yellow-500 to-amber-600',
+        icon: <Star className="w-4 h-4" />
+      };
+    }
+    
+    if (lowerName.includes('premium') || lowerName.includes('confort') || lowerName.includes('plus')) {
+      return {
+        label: 'Premium',
+        color: 'bg-gradient-to-r from-purple-500 to-indigo-600',
+        icon: <Sparkles className="w-4 h-4" />
+      };
+    }
+    
+    return {
+      label: 'Standard',
+      color: 'bg-gradient-to-r from-primary to-accent',
+      icon: <Gift className="w-4 h-4" />
+    };
   };
 
   if (loading) {
@@ -124,8 +226,7 @@ export default function FestivalsPage() {
               Festivals & Événements
             </h1>
             <p className="text-white/80 text-lg">
-              Synchronisez votre voyage avec les moments forts de la culture béninoise.
-              Des cérémonies vodoun aux festivals de musique contemporaine.
+              Découvrez nos festivals et choisissez votre pack : Standard, Premium ou VIP
             </p>
           </motion.div>
         </div>
@@ -181,19 +282,14 @@ export default function FestivalsPage() {
 
           {selectedMonth !== null && (
             <div className="flex justify-center mt-6">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+              <Button
+                variant="ghost"
+                onClick={() => setSelectedMonth(null)}
+                className="gap-2"
               >
-                <Button
-                  variant="ghost"
-                  onClick={() => setSelectedMonth(null)}
-                  className="gap-2"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Tous les festivals
-                </Button>
-              </motion.div>
+                <ChevronLeft className="w-4 h-4" />
+                Tous les festivals
+              </Button>
             </div>
           )}
         </div>
@@ -202,7 +298,6 @@ export default function FestivalsPage() {
       {/* Festivals Grid */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          {/* Results count */}
           <div className="mb-6 text-muted-foreground">
             {filteredFestivals.length} festival{filteredFestivals.length > 1 ? "s" : ""} trouvé{filteredFestivals.length > 1 ? "s" : ""}
           </div>
@@ -217,7 +312,6 @@ export default function FestivalsPage() {
                 month: 'long' 
               });
               
-              // Calculer la durée
               const durationDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
               
               return (
@@ -228,7 +322,6 @@ export default function FestivalsPage() {
                   transition={{ delay: idx * 0.1 }}
                   className="group bg-card rounded-2xl overflow-hidden shadow-elegant hover:shadow-lg transition-all"
                 >
-                  {/* Image */}
                   <div className="relative h-56 overflow-hidden">
                     <img
                       src={festival.main_image || festivalVodoun}
@@ -257,7 +350,6 @@ export default function FestivalsPage() {
                     </div>
                   </div>
 
-                  {/* Content */}
                   <div className="p-5">
                     <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                       {festival.description}
@@ -265,11 +357,10 @@ export default function FestivalsPage() {
 
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-xl font-bold text-primary">
-                        {price.toLocaleString()} FCFA
+                        À partir de {price.toLocaleString()} FCFA
                       </span>
                     </div>
 
-                    {/* Buttons */}
                     <div className="flex gap-2">
                       <Link to={`/festivals/${festival.slug}`} className="flex-1">
                         <Button variant="outline" size="sm" className="w-full gap-1">
@@ -279,21 +370,12 @@ export default function FestivalsPage() {
                       </Link>
                       <Button
                         size="sm"
-                        variant={isInCart(festival.id.toString()) ? "outline" : "gold"}
+                        variant="default"
                         className="flex-1 gap-1"
-                        onClick={() => handleAddToCart(festival)}
+                        onClick={() => handleViewPacks(festival)}
                       >
-                        {isInCart(festival.id.toString()) ? (
-                          <>
-                            <Check className="w-4 h-4" />
-                            Ajouté
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingCart className="w-4 h-4" />
-                            Ajouter
-                          </>
-                        )}
+                        <Gift className="w-4 h-4" />
+                        Voir les packs
                       </Button>
                     </div>
                   </div>
@@ -320,53 +402,139 @@ export default function FestivalsPage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20 gradient-hero">
-        <div className="container mx-auto px-4 text-center">
+      {/* Modale Packs */}
+      <AnimatePresence>
+        {selectedFestival && (
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={handleCloseModal}
           >
-            <Sparkles className="w-12 h-12 mx-auto mb-6 text-accent" />
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-white mb-4">
-              Planifiez autour des festivals
-            </h2>
-            <p className="text-white/80 mb-8 max-w-xl mx-auto">
-              Notre moteur intelligent intègre automatiquement les festivals 
-              dans votre itinéraire personnalisé.
-            </p>
-            <Link to="/moteur">
-              <Button variant="gold" size="xl" className="gap-2">
-                <Sparkles className="w-5 h-5" />
-                Créer mon voyage
-              </Button>
-            </Link>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Floating Cart */}
-      {itemCount > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 100 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
-        >
-          <Link to="/panier">
-            <div className="flex items-center gap-4 px-6 py-4 bg-foreground text-background rounded-2xl shadow-2xl cursor-pointer hover:scale-105 transition-transform">
-              <div>
-                <div className="text-sm opacity-80">{itemCount} article{itemCount > 1 ? "s" : ""}</div>
-                <div className="font-semibold">{totalPrice.toLocaleString()} FCFA</div>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-background rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto"
+            >
+              {/* Header */}
+              <div className="sticky top-0 bg-background border-b p-6 flex items-center justify-between z-10">
+                <div>
+                  <h2 className="font-serif text-2xl font-bold">{selectedFestival.name}</h2>
+                  <p className="text-muted-foreground">Choisissez votre pack</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleCloseModal}
+                >
+                  <X className="w-5 h-5" />
+                </Button>
               </div>
-              <Button variant="gold" size="lg" className="gap-2">
-                <ShoppingCart className="w-4 h-4" />
-                Voir le panier
-              </Button>
-            </div>
-          </Link>
-        </motion.div>
-      )}
+
+              {/* Content */}
+              <div className="p-6">
+                {loadingPacks ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 className="w-12 h-12 animate-spin text-primary" />
+                  </div>
+                ) : festivalPacks.length === 0 ? (
+                  <div className="text-center py-16">
+                    <Gift className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                    <h3 className="font-serif text-xl font-bold mb-2">Aucun pack disponible</h3>
+                    <p className="text-muted-foreground">
+                      Les packs pour ce festival seront bientôt disponibles.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {festivalPacks.map((pack) => {
+                      const level = getPackLevel(pack.nom);
+                      const price = parseFloat(pack.prix?.toString() || '0');
+                      const isReserved = reservedPacks.has(pack.id);
+
+                      return (
+                        <div
+                          key={pack.id}
+                          className="bg-card rounded-xl overflow-hidden border-2 border-border hover:border-primary/30 transition-all"
+                        >
+                          {/* Header */}
+                          <div className={`${level.color} p-4 text-white`}>
+                            <Badge className="bg-white/20 text-white border-0 gap-1 mb-2">
+                              {level.icon}
+                              {level.label}
+                            </Badge>
+                            <h3 className="font-serif text-xl font-bold">
+                              {pack.nom}
+                            </h3>
+                          </div>
+
+                          {/* Content */}
+                          <div className="p-4">
+                            <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                              {pack.description || 'Pack festival tout inclus'}
+                            </p>
+
+                            {/* Infos */}
+                            <div className="space-y-2 mb-4">
+                              {pack.lieu && (
+                                <div className="flex items-center gap-2 text-sm">
+                                  <MapPin className="w-4 h-4 text-muted-foreground" />
+                                  {pack.lieu}
+                                </div>
+                              )}
+                              {pack.nombre_places && (
+                                <div className="flex items-center gap-2 text-sm">
+                                  <Users className="w-4 h-4 text-muted-foreground" />
+                                  {pack.nombre_places} places disponibles
+                                </div>
+                              )}
+                              {pack.accommodation && (
+                                <div className="flex items-center gap-2 text-sm">
+                                  <Check className="w-4 h-4 text-nature" />
+                                  Hébergement inclus
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Price */}
+                            <div className="mb-4 pb-4 border-t pt-4">
+                              <div className="text-2xl font-bold text-primary">
+                                {price.toLocaleString()} FCFA
+                              </div>
+                              <div className="text-xs text-muted-foreground">par personne</div>
+                            </div>
+
+                            {/* Button */}
+                            <Button
+                              size="lg"
+                              variant={isReserved ? "outline" : "default"}
+                              className="w-full"
+                              onClick={() => handleReservePack(pack)}
+                              disabled={isReserved}
+                            >
+                              {isReserved ? (
+                                <>
+                                  <Check className="w-4 h-4 mr-2" />
+                                  Réservé
+                                </>
+                              ) : (
+                                'Réserver'
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -7,8 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { organizedTrips } from '@/data/organizedTripsData';
-import { useCart } from '@/contexts/CartContext';
+import outingsService, { Outing } from '@/services/outingsService';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { useNotifications } from '@/contexts/NotificationsContext';
 import { WishlistButton } from '@/components/cards/WishlistButton';
@@ -16,21 +16,49 @@ import { ImageGallery } from '@/components/gallery/ImageGallery';
 import { TripReminderBanner } from '@/components/notifications/TripReminderBanner';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import api from '@/services/api';
 
 export default function OrganizedTripDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addItem, isInCart } = useCart();
   const { user } = useUserAuth();
   const { scheduleRemindersForTrip } = useNotifications();
   const { toast } = useToast();
+  const [outing, setOuting] = useState<Outing | null>(null);
+  const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
 
-  const trip = organizedTrips.find((t) => t.id === id);
+  useEffect(() => {
+    const loadOuting = async () => {
+      if (!id) return;
+      try {
+        setLoading(true);
+        const data = await outingsService.getById(id);
+        setOuting(data);
+      } catch (error) {
+        console.error('Erreur chargement sortie:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les détails de la sortie.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadOuting();
+  }, [id, toast]);
 
-  if (!trip) {
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">Chargement...</div>
+      </div>
+    );
+  }
+
+  if (!outing) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -43,10 +71,27 @@ export default function OrganizedTripDetailPage() {
     );
   }
 
-  const isFullyBooked = trip.availablePlaces === 0;
-  const alreadyInCart = isInCart(`${trip.id}-trip`);
+  const isFullyBooked = outing.remaining_places <= 0;
 
-  const handleReservation = () => {
+  const getCategoryLabel = (category?: string) => {
+    switch (category) {
+      case 'journée': return 'Journée découverte';
+      case 'tournée': return 'Tournée touristique';
+      case 'immersion': return 'Immersion culturelle';
+      default: return 'Sortie générale';
+    }
+  };
+
+  const getCategoryColor = (category?: string) => {
+    switch (category) {
+      case 'journée': return 'bg-primary';
+      case 'tournée': return 'bg-accent';
+      case 'immersion': return 'bg-culture';
+      default: return 'bg-muted';
+    }
+  };
+
+  const handleReservation = async () => {
     if (!user) {
       toast({
         title: "Connexion requise",
@@ -66,50 +111,56 @@ export default function OrganizedTripDetailPage() {
       return;
     }
 
-    if (quantity > trip.availablePlaces) {
+    if (quantity > outing.remaining_places) {
       toast({
         title: "Nombre de places insuffisant",
-        description: `Il ne reste que ${trip.availablePlaces} places disponibles.`,
+        description: `Il ne reste que ${outing.remaining_places} places disponibles.`,
         variant: "destructive",
       });
       return;
     }
 
-    addItem({
-      id: `${trip.id}-trip`,
-      type: 'discovery',
-      name: `${trip.title} (${quantity} place${quantity > 1 ? 's' : ''})`,
-      price: trip.price * quantity,
-      image: trip.image,
-      dates: format(parseISO(trip.date), 'dd MMMM yyyy', { locale: fr }),
-      city: trip.city,
-      duration: trip.duration,
-    });
+    try {
+      // Création de la réservation via l'API
+      const response = await api.post('/bookings', {
+        booking_type: 'outing',
+        item_id: outing.id,
+        start_date: outing.date,
+        participants: quantity,
+        notes: ''
+      });
 
-    // Schedule email reminders for this trip
-    scheduleRemindersForTrip(trip.id);
+      const booking = response.data.data || response.data;
 
-    navigate('/panier');
-  };
+      toast({
+        title: "Réservation enregistrée",
+        description: "Votre réservation a été créée. Vous allez être redirigé vers le paiement.",
+      });
 
-  const getCategoryLabel = (category: string) => {
-    switch (category) {
-      case 'journée': return 'Journée découverte';
-      case 'tournée': return 'Tournée touristique';
-      case 'immersion': return 'Immersion culturelle';
-      default: return category;
+      // Programmer les rappels (par exemple 24h avant)
+      scheduleRemindersForTrip(outing.id);
+
+      // Rediriger vers la page de paiement ou la liste des réservations
+      navigate(`/paiement/${booking.id}`); // ou `/mes-reservations`
+
+    } catch (error: any) {
+      console.error('Erreur réservation:', error);
+      toast({
+        title: "Échec de la réservation",
+        description: error.response?.data?.message || "Une erreur est survenue.",
+        variant: "destructive",
+      });
     }
   };
 
+  // Construire le tableau d'images pour la galerie
+  const images = outing.images?.length ? outing.images : [outing.image].filter(Boolean);
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Back Button */}
+      {/* Bouton retour */}
       <div className="container mx-auto px-4 py-4">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate('/sorties')}
-          className="gap-2"
-        >
+        <Button variant="ghost" onClick={() => navigate('/sorties')} className="gap-2">
           <ArrowLeft className="w-4 h-4" />
           Retour aux sorties
         </Button>
@@ -119,33 +170,29 @@ export default function OrganizedTripDetailPage() {
       <section className="container mx-auto px-4 pb-8">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
           <div>
-            <Badge className="mb-3 bg-primary/10 text-primary border-primary/20">
-              {getCategoryLabel(trip.category)}
+            <Badge className={`mb-3 text-white ${getCategoryColor(outing.category)}`}>
+              {getCategoryLabel(outing.category)}
             </Badge>
             <h1 className="font-serif text-3xl md:text-4xl font-bold mb-2">
-              {trip.title}
+              {outing.name}
             </h1>
             <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
               <div className="flex items-center gap-1">
                 <MapPin className="w-4 h-4" />
-                {trip.city}, {trip.location}
+                {outing.location}
               </div>
-              <div className="flex items-center gap-1">
-                <Star className="w-4 h-4 fill-accent text-accent" />
-                <span className="font-medium text-foreground">{trip.rating}</span>
-                <span>({trip.reviewCount} avis)</span>
-              </div>
+              {/* Note : les avis ne sont pas encore disponibles via l'API */}
             </div>
           </div>
           <div className="flex items-center gap-2">
             <WishlistButton
               item={{
-                id: trip.id,
+                id: outing.id,
                 type: 'trip',
-                name: trip.title,
-                image: trip.image,
-                price: trip.price,
-                location: trip.city,
+                name: outing.name,
+                image: outing.image || '/images/default-outing.jpg',
+                price: outing.price,
+                location: outing.location,
               }}
             />
             <Button variant="outline" size="icon">
@@ -154,94 +201,94 @@ export default function OrganizedTripDetailPage() {
           </div>
         </div>
 
-        {/* Image Gallery */}
-        <ImageGallery images={trip.images} title={trip.title} />
+        {/* Galerie d'images */}
+        <ImageGallery images={images as string[]} title={outing.name} />
       </section>
 
-      {/* Content */}
+      {/* Contenu principal */}
       <section className="container mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
+          {/* Colonne de gauche (détails) */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Reminder Banner */}
-            {user && alreadyInCart && (
-              <TripReminderBanner 
-                tripId={trip.id} 
-                tripTitle={trip.title} 
-                isBooked={alreadyInCart} 
-              />
-            )}
-
+            {/* Bannière de rappel (si déjà réservé ? à améliorer plus tard) */}
             {/* Description */}
             <div>
               <h2 className="font-serif text-2xl font-semibold mb-4">À propos de cette sortie</h2>
               <p className="text-muted-foreground leading-relaxed">
-                {trip.description}
+                {outing.description}
               </p>
             </div>
 
             <Separator />
 
-            {/* Program */}
-            <div>
-              <h2 className="font-serif text-2xl font-semibold mb-6">Programme détaillé</h2>
-              <div className="space-y-4">
-                {trip.program.map((item, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="flex gap-4 p-4 bg-muted/50 rounded-xl"
-                  >
-                    <div className="shrink-0 w-24 font-semibold text-primary">
-                      {item.time}
-                    </div>
-                    <div className="text-foreground">{item.activity}</div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Activities */}
-            <div>
-              <h2 className="font-serif text-2xl font-semibold mb-4">Activités incluses</h2>
-              <div className="flex flex-wrap gap-2">
-                {trip.activities.map((activity, index) => (
-                  <Badge key={index} variant="secondary" className="px-3 py-1">
-                    {activity}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* What's Included */}
-            <div>
-              <h2 className="font-serif text-2xl font-semibold mb-4">Ce qui est inclus</h2>
-              <div className="grid sm:grid-cols-2 gap-3">
-                {trip.includes.map((item, index) => (
-                  <div key={index} className="flex items-center gap-2 text-muted-foreground">
-                    <Check className="w-5 h-5 text-nature shrink-0" />
-                    {item}
+            {/* Programme détaillé */}
+            {outing.program && outing.program.length > 0 && (
+              <>
+                <div>
+                  <h2 className="font-serif text-2xl font-semibold mb-6">Programme détaillé</h2>
+                  <div className="space-y-4">
+                    {outing.program.map((item, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="flex gap-4 p-4 bg-muted/50 rounded-xl"
+                      >
+                        <div className="shrink-0 w-24 font-semibold text-primary">
+                          {item.time}
+                        </div>
+                        <div className="text-foreground">{item.activity}</div>
+                      </motion.div>
+                    ))}
                   </div>
-                ))}
+                </div>
+                <Separator />
+              </>
+            )}
+
+            {/* Activités incluses */}
+            {outing.activities && outing.activities.length > 0 && (
+              <>
+                <div>
+                  <h2 className="font-serif text-2xl font-semibold mb-4">Activités incluses</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {outing.activities.map((activity, index) => (
+                      <Badge key={index} variant="secondary" className="px-3 py-1">
+                        {activity}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
+
+            {/* Ce qui est inclus */}
+            {outing.includes && outing.includes.length > 0 && (
+              <div>
+                <h2 className="font-serif text-2xl font-semibold mb-4">Ce qui est inclus</h2>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {outing.includes.map((item, index) => (
+                    <div key={index} className="flex items-center gap-2 text-muted-foreground">
+                      <Check className="w-5 h-5 text-nature shrink-0" />
+                      {item}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
-          {/* Sidebar - Booking Card */}
+          {/* Colonne de droite (carte de réservation) */}
           <div className="lg:col-span-1">
             <div className="sticky top-24 bg-card border rounded-2xl p-6 shadow-elegant">
-              {/* Urgency Banner */}
-              {!isFullyBooked && trip.availablePlaces <= 5 && (
+              {/* Bannière d'urgence */}
+              {!isFullyBooked && outing.remaining_places <= 5 && (
                 <div className="flex items-center gap-2 bg-accent/10 text-accent-foreground rounded-lg p-3 mb-4">
                   <AlertTriangle className="w-5 h-5 text-accent" />
                   <span className="text-sm font-medium">
-                    Plus que {trip.availablePlaces} places disponibles !
+                    Plus que {outing.remaining_places} places disponibles !
                   </span>
                 </div>
               )}
@@ -255,53 +302,55 @@ export default function OrganizedTripDetailPage() {
                 </div>
               )}
 
-              {/* Price */}
+              {/* Prix */}
               <div className="mb-6">
                 <span className="text-3xl font-bold text-primary">
-                  {trip.price.toLocaleString()} FCFA
+                  {outing.price.toLocaleString()} FCFA
                 </span>
                 <span className="text-muted-foreground"> / personne</span>
               </div>
 
-              {/* Info Grid */}
+              {/* Grille d'informations */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-muted/50 rounded-xl p-3 text-center">
                   <Calendar className="w-5 h-5 mx-auto mb-1 text-primary" />
                   <div className="text-xs text-muted-foreground">Date</div>
                   <div className="text-sm font-semibold">
-                    {format(parseISO(trip.date), 'dd MMM yyyy', { locale: fr })}
+                    {format(parseISO(outing.date), 'dd MMM yyyy', { locale: fr })}
                   </div>
                 </div>
                 <div className="bg-muted/50 rounded-xl p-3 text-center">
                   <Clock className="w-5 h-5 mx-auto mb-1 text-primary" />
                   <div className="text-xs text-muted-foreground">Heure</div>
-                  <div className="text-sm font-semibold">{trip.time}</div>
+                  <div className="text-sm font-semibold">{outing.time || 'Non précisée'}</div>
                 </div>
                 <div className="bg-muted/50 rounded-xl p-3 text-center">
                   <Clock className="w-5 h-5 mx-auto mb-1 text-primary" />
                   <div className="text-xs text-muted-foreground">Durée</div>
-                  <div className="text-sm font-semibold">{trip.duration}</div>
+                  <div className="text-sm font-semibold">{outing.duration}</div>
                 </div>
                 <div className="bg-muted/50 rounded-xl p-3 text-center">
                   <Users className="w-5 h-5 mx-auto mb-1 text-primary" />
                   <div className="text-xs text-muted-foreground">Places</div>
                   <div className="text-sm font-semibold">
-                    {isFullyBooked ? 'Complet' : `${trip.availablePlaces}/${trip.totalPlaces}`}
+                    {isFullyBooked ? 'Complet' : `${outing.remaining_places}/${outing.max_participants}`}
                   </div>
                 </div>
               </div>
 
-              {/* Meeting Point */}
-              <div className="mb-6 p-3 bg-muted/50 rounded-xl">
-                <div className="flex items-center gap-2 text-sm font-medium mb-1">
-                  <MapPin className="w-4 h-4 text-primary" />
-                  Point de rendez-vous
+              {/* Point de rendez-vous */}
+              {outing.meeting_point && (
+                <div className="mb-6 p-3 bg-muted/50 rounded-xl">
+                  <div className="flex items-center gap-2 text-sm font-medium mb-1">
+                    <MapPin className="w-4 h-4 text-primary" />
+                    Point de rendez-vous
+                  </div>
+                  <p className="text-sm text-muted-foreground">{outing.meeting_point}</p>
                 </div>
-                <p className="text-sm text-muted-foreground">{trip.meetingPoint}</p>
-              </div>
+              )}
 
-              {/* Quantity Selector */}
-              {!isFullyBooked && !alreadyInCart && (
+              {/* Sélecteur de quantité */}
+              {!isFullyBooked && (
                 <div className="mb-6">
                   <label className="text-sm font-medium mb-2 block">Nombre de places</label>
                   <div className="flex items-center gap-3">
@@ -317,35 +366,30 @@ export default function OrganizedTripDetailPage() {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setQuantity(Math.min(trip.availablePlaces, quantity + 1))}
-                      disabled={quantity >= trip.availablePlaces}
+                      onClick={() => setQuantity(Math.min(outing.remaining_places, quantity + 1))}
+                      disabled={quantity >= outing.remaining_places}
                     >
                       <Plus className="w-4 h-4" />
                     </Button>
                   </div>
                   <div className="text-right mt-2 text-sm text-muted-foreground">
-                    Total: <span className="font-semibold text-foreground">{(trip.price * quantity).toLocaleString()} FCFA</span>
+                    Total: <span className="font-semibold text-foreground">
+                      {(outing.price * quantity).toLocaleString()} FCFA
+                    </span>
                   </div>
                 </div>
               )}
 
-              {/* Action Button */}
-              {alreadyInCart ? (
-                <Button disabled className="w-full gap-2" size="lg">
-                  <Check className="w-5 h-5" />
-                  Déjà dans le panier
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleReservation}
-                  disabled={isFullyBooked}
-                  className="w-full gap-2"
-                  size="lg"
-                  variant={isFullyBooked ? "outline" : "default"}
-                >
-                  {isFullyBooked ? 'Sortie complète' : 'Réserver ma place'}
-                </Button>
-              )}
+              {/* Bouton d'action */}
+              <Button
+                onClick={handleReservation}
+                disabled={isFullyBooked}
+                className="w-full gap-2"
+                size="lg"
+                variant={isFullyBooked ? "outline" : "default"}
+              >
+                {isFullyBooked ? 'Sortie complète' : 'Réserver ma place'}
+              </Button>
 
               {!user && !isFullyBooked && (
                 <p className="text-xs text-muted-foreground text-center mt-3">

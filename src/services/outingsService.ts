@@ -9,19 +9,34 @@ export interface Outing {
   remaining_places: number;
   location: string;
   date: string;
-  time: string;
-  duration: string;
+  time?: string;
+  duration?: string;
   days: number;
-  category: string;
-  image: string;
+  category?: string;
+  image?: string;
   images?: string[];
-  meeting_point: string;
-  program: Array<{ time: string; activity: string }>;
-  activities: string[];
-  includes: string[];
+  meeting_point?: string;
+  program?: Array<{ time: string; activity: string }>;
+  activities?: string[];
+  includes?: string[];
   is_active: boolean;
   created_at: string;
 }
+
+// Valeurs par défaut pour les champs manquants
+const defaultOutingValues = (outing: any): Outing => ({
+  ...outing,
+  is_active: outing.is_active ?? true,
+  category: outing.category || 'général',
+  duration: outing.duration || (outing.days ? `${outing.days} jour(s)` : 'Durée non spécifiée'),
+  image: outing.image || '/images/default-outing.jpg',
+  time: outing.time || '',
+  images: outing.images || [],
+  meeting_point: outing.meeting_point || 'À définir',
+  program: outing.program || [],
+  activities: outing.activities || [],
+  includes: outing.includes || [],
+});
 
 const outingsService = {
   /**
@@ -34,7 +49,9 @@ const outingsService = {
     const data = response.data.data || response.data;
 
     if (Array.isArray(data)) {
-      return data.filter((outing: Outing) => outing.is_active);
+      return data
+        .map(defaultOutingValues)
+        .filter((outing) => outing.is_active);
     }
 
     return [];
@@ -45,7 +62,8 @@ const outingsService = {
    */
   getById: async (id: string): Promise<Outing> => {
     const response = await api.get(`/outings/${id}`);
-    return response.data.data || response.data;
+    const outing = response.data.data || response.data;
+    return defaultOutingValues(outing);
   },
 
   /**

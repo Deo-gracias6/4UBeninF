@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import {
   CreditCard,
   Smartphone,
@@ -12,50 +12,168 @@ import {
   MapPin,
   Users,
   ChevronLeft,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useUserAuth } from "@/contexts/UserAuthContext";
+import api from "@/services/api";
+import { format, parseISO } from "date-fns";
+import { fr } from "date-fns/locale";
 import cotonouCity from "@/assets/cotonou-city.jpg";
 
-const mockOrder = {
-  experiences: [
-    { name: "Circuit 7 jours - Découverte du Bénin", price: 350000 },
-    { name: "Safari Pendjari (2 jours)", price: 120000 },
-    { name: "Cérémonie Vodoun", price: 45000 },
-    { name: "Cours de cuisine béninoise", price: 35000 },
-  ],
-  festivals: [
-    { name: "Festival du Vodoun (3 jours)", price: 75000 },
-  ],
-  travelers: 2,
-  days: 7,
-  startDate: "15 Février 2025",
-};
-
-const subtotal = mockOrder.experiences.reduce((sum, e) => sum + e.price, 0) +
-  mockOrder.festivals.reduce((sum, f) => sum + f.price, 0);
-const fees = Math.round(subtotal * 0.03);
-const total = subtotal + fees;
+interface Booking {
+  id: string;
+  booking_type: string;
+  item_id: string;
+  item?: {
+    id: string;
+    name: string;
+    price: number;
+    location?: string;
+    duration?: string;
+    image?: string;
+  };
+  start_date: string;
+  end_date?: string;
+  participants: number;
+  unit_price: number;
+  total_price: number;
+  status: string;
+  payment_status: string;
+}
 
 export default function PaymentPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user } = useUserAuth();
+  const { toast } = useToast();
+
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [loading, setLoading] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<"card" | "mobile">("card");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
-  const { toast } = useToast();
 
-  const handlePayment = () => {
+  // Charger la réservation
+  useEffect(() => {
+    if (!id) return;
+
+    const loadBooking = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(`/bookings/${id}`);
+        const bookingData = response.data.data || response.data;
+        setBooking(bookingData);
+      } catch (error: any) {
+        console.error("Erreur chargement réservation:", error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les détails de la réservation.",
+          variant: "destructive",
+        });
+        navigate("/mes-reservations"); // Rediriger vers la liste des réservations
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadBooking();
+  }, [id, navigate, toast]);
+
+  const handlePayment = async () => {
+    if (!booking) return;
+
     setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
-      setIsComplete(true);
-      toast({
-        title: "Paiement réussi !",
-        description: "Votre voyage a été confirmé. Vous recevrez un email de confirmation.",
+
+    try {
+      // Simuler un délai de paiement (remplacer par un vrai appel API)
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Appel API pour confirmer le paiement
+      const response = await api.patch(`/bookings/${booking.id}`, {
+        status: "confirmed",
+        payment_status: "paid",
+        paid_at: new Date().toISOString(),
+        payment_method: paymentMethod,
       });
-    }, 2000);
+
+      if (response.data) {
+        setIsComplete(true);
+        toast({
+          title: "Paiement réussi !",
+          description: "Votre voyage a été confirmé. Vous recevrez un email de confirmation.",
+        });
+      }
+    } catch (error: any) {
+      console.error("Erreur paiement:", error);
+      toast({
+        title: "Échec du paiement",
+        description: error.response?.data?.message || "Une erreur est survenue.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
+  // Vérifier que l'utilisateur est connecté et propriétaire de la réservation
+  if (!user) {
+    return (
+      <main className="pt-20 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Connexion requise</h1>
+          <Button onClick={() => navigate("/connexion")}>Se connecter</Button>
+        </div>
+      </main>
+    );
+  }
+
+  if (loading) {
+    return (
+      <main className="pt-20 min-h-screen flex items-center justify-center">
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+      </main>
+    );
+  }
+
+  if (!booking) {
+    return (
+      <main className="pt-20 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Réservation introuvable</h1>
+          <Button onClick={() => navigate("/")}>Retour à l'accueil</Button>
+        </div>
+      </main>
+    );
+  }
+
+  // Si déjà payé, rediriger
+  if (booking.payment_status === "paid") {
+    return (
+      <main className="pt-20 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Check className="w-16 h-16 text-nature mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-4">Déjà payé</h1>
+          <p className="text-muted-foreground mb-6">Cette réservation a déjà été réglée.</p>
+          <Button onClick={() => navigate("/mes-reservations")}>Voir mes réservations</Button>
+        </div>
+      </main>
+    );
+  }
+const defaultItem = {
+  id: '',
+  name: "Sortie",
+  price: booking.unit_price,
+  location: undefined,
+  duration: undefined,
+  image: undefined,
+};
+
+const item = booking.item ? { ...defaultItem, ...booking.item } : defaultItem;
+
+  // Écran de confirmation
   if (isComplete) {
     return (
       <main className="pt-20 min-h-screen flex items-center justify-center">
@@ -85,15 +203,17 @@ export default function PaymentPage() {
             <div className="text-left space-y-3">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Référence</span>
-                <span className="font-mono font-semibold">4UB-2025-0001</span>
+                <span className="font-mono font-semibold">{booking.id.slice(0, 8)}...</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Départ</span>
-                <span className="font-semibold">{mockOrder.startDate}</span>
+                <span className="font-semibold">
+                  {format(parseISO(booking.start_date), 'dd MMMM yyyy', { locale: fr })}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Montant total</span>
-                <span className="font-semibold text-primary">{total.toLocaleString()} FCFA</span>
+                <span className="font-semibold text-primary">{booking.total_price.toLocaleString()} FCFA</span>
               </div>
             </div>
           </div>
@@ -119,9 +239,9 @@ export default function PaymentPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-12 pt-8"
           >
-            <Link to="/moteur" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4">
+            <Link to="/mes-reservations" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4">
               <ChevronLeft className="w-4 h-4" />
-              Modifier l'itinéraire
+              Retour aux réservations
             </Link>
             <h1 className="font-serif text-3xl md:text-5xl font-bold">
               Finaliser votre <span className="text-gradient">réservation</span>
@@ -141,60 +261,52 @@ export default function PaymentPage() {
                 {/* Trip Info */}
                 <div className="relative h-40 rounded-xl overflow-hidden mb-6">
                   <img
-                    src={cotonouCity}
-                    alt="Voyage"
+                    src={item.image || cotonouCity}
+                    alt={item.name}
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4 text-white">
-                    <h3 className="font-semibold">Découverte du Bénin</h3>
+                    <h3 className="font-semibold">{item.name}</h3>
                     <div className="flex items-center gap-4 text-sm text-white/80 mt-1">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
-                        {mockOrder.days} jours
+                        {format(parseISO(booking.start_date), 'dd MMM yyyy', { locale: fr })}
                       </span>
                       <span className="flex items-center gap-1">
                         <Users className="w-4 h-4" />
-                        {mockOrder.travelers} pers.
+                        {booking.participants} pers.
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Experiences */}
+                {/* Détail */}
                 <div className="space-y-3 mb-6">
-                  <h4 className="font-medium text-sm text-muted-foreground">Expériences</h4>
-                  {mockOrder.experiences.map((exp, idx) => (
-                    <div key={idx} className="flex justify-between text-sm">
-                      <span className="line-clamp-1 flex-1 mr-4">{exp.name}</span>
-                      <span className="font-medium shrink-0">{exp.price.toLocaleString()} FCFA</span>
+                  <div className="flex justify-between text-sm">
+                    <span>{item.name}</span>
+                    <span className="font-medium">{booking.unit_price.toLocaleString()} FCFA</span>
+                  </div>
+                  {booking.booking_type === 'outing' && item.location && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <MapPin className="w-3 h-3" />
+                      {item.location}
                     </div>
-                  ))}
-                </div>
-
-                {/* Festivals */}
-                <div className="space-y-3 mb-6">
-                  <h4 className="font-medium text-sm text-muted-foreground">Festivals</h4>
-                  {mockOrder.festivals.map((fest, idx) => (
-                    <div key={idx} className="flex justify-between text-sm">
-                      <span>{fest.name}</span>
-                      <span className="font-medium">{fest.price.toLocaleString()} FCFA</span>
-                    </div>
-                  ))}
+                  )}
                 </div>
 
                 <div className="border-t border-border pt-4 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Sous-total</span>
-                    <span>{subtotal.toLocaleString()} FCFA</span>
+                    <span>{booking.total_price.toLocaleString()} FCFA</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Frais de service</span>
-                    <span>{fees.toLocaleString()} FCFA</span>
+                    <span>0 FCFA</span> {/* À ajuster si nécessaire */}
                   </div>
                   <div className="flex justify-between text-lg font-bold pt-2">
                     <span>Total</span>
-                    <span className="text-primary">{total.toLocaleString()} FCFA</span>
+                    <span className="text-primary">{booking.total_price.toLocaleString()} FCFA</span>
                   </div>
                 </div>
               </div>
@@ -311,7 +423,7 @@ export default function PaymentPage() {
                     </>
                   ) : (
                     <>
-                      Payer {total.toLocaleString()} FCFA
+                      Payer {booking.total_price.toLocaleString()} FCFA
                       <ArrowRight className="w-5 h-5" />
                     </>
                   )}

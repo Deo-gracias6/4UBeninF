@@ -6,17 +6,15 @@ import {
   Utensils, 
   TreePine, 
   Sparkles, 
-  Check, 
-  ShoppingCart,
   Loader2,
   Eye,
   Clock,
   Users,
   Compass,
-  Zap
+  Zap,
+  Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCart } from "@/contexts/CartContext";
 import experienceService, { Experience } from "@/services/experienceService";
 import categoryService, { ExperienceCategory } from "@/services/categoryService";
 
@@ -37,8 +35,6 @@ export default function ExperiencesPage() {
   const [allExperiences, setAllExperiences] = useState<Experience[]>([]);
   const [categories, setCategories] = useState<ExperienceCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  const { addItem, isInCart, totalPrice, itemCount } = useCart();
 
   // Charger toutes les catégories et leurs expériences au montage
   useEffect(() => {
@@ -62,7 +58,7 @@ export default function ExperiencesPage() {
             // Ajouter l'ID de catégorie à chaque expérience
             const expsWithCategory = experiences.map((exp: any) => ({
               ...exp,
-              categoryId: category.id, // ✅ On ajoute manuellement l'ID de catégorie
+              categoryId: category.id,
             }));
             
             allExps.push(...expsWithCategory);
@@ -89,20 +85,6 @@ export default function ExperiencesPage() {
   const filteredExperiences = selectedCategory
     ? allExperiences.filter((exp: any) => exp.categoryId === selectedCategory)
     : allExperiences;
-
-  const handleAddToCart = (exp: any) => {
-    const price = parseFloat(exp.price) || 0;
-    const category = categories.find(c => c.id === exp.categoryId);
-    
-    addItem({
-      id: exp.id,
-      type: "experience",
-      name: exp.name,
-      price: price,
-      image: exp.mainImage || undefined,
-      category: category?.name,
-    });
-  };
 
   if (loading) {
     return (
@@ -252,38 +234,19 @@ export default function ExperiencesPage() {
                     </div>
 
                     {/* Buttons */}
-                  <div className="flex gap-2">
-  <Link 
-    to={`/experiences/${exp.slug}`} 
-    className="flex-1"
-    onClick={() => {
-      console.log('🔍 Navigation vers:', exp.slug);
-      console.log('📦 Expérience complète:', exp);
-    }}
-  >
-    <Button variant="outline" size="sm" className="w-full gap-1">
-      <Eye className="w-4 h-4" />
-      Détails
-    </Button>
-  </Link>
-                      <Button
-                        size="sm"
-                        variant={isInCart(exp.id) ? "outline" : "gold"}
-                        className="flex-1 gap-1"
-                        onClick={() => handleAddToCart(exp)}
-                      >
-                        {isInCart(exp.id) ? (
-                          <>
-                            <Check className="w-4 h-4" />
-                            Ajouté
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingCart className="w-4 h-4" />
-                            Ajouter
-                          </>
-                        )}
-                      </Button>
+                    <div className="flex gap-2">
+                      <Link to={`/experiences/${exp.slug}`} className="flex-1">
+                        <Button variant="outline" size="sm" className="w-full gap-1">
+                          <Eye className="w-4 h-4" />
+                          Détails
+                        </Button>
+                      </Link>
+                      <Link to={`/experiences/${exp.slug}`} className="flex-1">
+                        <Button size="sm" variant="default" className="w-full gap-1">
+                          <Calendar className="w-4 h-4" />
+                          Réserver
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 </motion.div>
@@ -338,28 +301,6 @@ export default function ExperiencesPage() {
           </motion.div>
         </div>
       </section>
-
-      {/* Floating Cart */}
-      {itemCount > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 100 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
-        >
-          <Link to="/panier">
-            <div className="flex items-center gap-4 px-6 py-4 bg-foreground text-background rounded-2xl shadow-2xl cursor-pointer hover:scale-105 transition-transform">
-              <div>
-                <div className="text-sm opacity-80">{itemCount} article{itemCount > 1 ? "s" : ""}</div>
-                <div className="font-semibold">{totalPrice.toLocaleString()} FCFA</div>
-              </div>
-              <Button variant="gold" size="lg" className="gap-2">
-                <ShoppingCart className="w-4 h-4" />
-                Voir le panier
-              </Button>
-            </div>
-          </Link>
-        </motion.div>
-      )}
     </main>
   );
 }

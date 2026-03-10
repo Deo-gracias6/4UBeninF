@@ -41,6 +41,8 @@ import AdminEnginePage from "./pages/admin/AdminEnginePage";
 import AdminReservationsPage from "./pages/admin/AdminReservationsPage";
 import OrganizedTripsPage from "./pages/OrganizedTripsPage";
 import OrganizedTripDetailPage from "./pages/OrganizedTripDetailPage";
+import MyBookingsPage from "./pages/MyBookingsPage"; 
+
 
 const queryClient = new QueryClient();
 
@@ -96,10 +98,11 @@ const App = () => (
                             <Route path="/moteur" element={<MoteurPage />} />
                             <Route path="/sorties" element={<OrganizedTripsPage />} />
                             <Route path="/sorties/:id" element={<OrganizedTripDetailPage />} />
-                            <Route path="/paiement" element={<PaymentPage />} />
+                            <Route path="/paiement/:id" element={<PaymentPage />} />
                             <Route path="/panier" element={<CartPage />} />
                             <Route path="/wishlist" element={<WishlistPage />} />
                             <Route path="/a-propos" element={<AboutPage />} />
+                            <Route path="/mes-reservations" element={<MyBookingsPage />} />
                             <Route path="*" element={<NotFound />} />
                           </Routes>
                           <Footer />
