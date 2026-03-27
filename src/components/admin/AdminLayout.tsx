@@ -1,14 +1,7 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { AdminSidebar } from './AdminSidebar';
-import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 export function AdminLayout() {
-  const { isAuthenticated } = useAdminAuth();
-
-  if (!isAuthenticated) {
-    return <Navigate to="/admin/login" replace />;
-  }
-
   return (
     <div className="min-h-screen bg-secondary">
       <AdminSidebar />

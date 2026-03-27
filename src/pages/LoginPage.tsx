@@ -46,15 +46,19 @@ export default function LoginPage() {
 
     try {
       // Appel à login du contexte
-      await login(email.trim(), password);
+      const response = await login(email.trim(), password);
 
       toast({ 
         title: 'Connexion réussie', 
-        description: 'Bienvenue sur 4UBENIN !' 
+        description: `Bienvenue ${response.user.nom} !` 
       });
 
-      // Navigation vers la page précédente ou accueil
-      navigate(from, { replace: true });
+      // ✅ Redirection selon le rôle
+      if (response.user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate(from, { replace: true });
+      }
 
     } catch (error: any) {
       const errorMessage = error.message || 'Erreur de connexion';

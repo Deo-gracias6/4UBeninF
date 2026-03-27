@@ -5,12 +5,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { AdminAuthProvider } from "@/contexts/AdminAuthContext";
 import { UserAuthProvider } from "@/contexts/UserAuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { NotificationsProvider } from "@/contexts/NotificationsContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { AdminProtectedRoute } from '@/components/auth/AdminProtectedRoute';
 import Index from "./pages/Index";
 import DiscoverPage from "./pages/DiscoverPage";
 import CityDetailPage from "./pages/CityDetailPage";
@@ -30,7 +30,6 @@ import RegisterPage from "./pages/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotificationsPage from "./pages/NotificationsPage";
 import NotFound from "./pages/NotFound";
-import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminDestinationsPage from "./pages/admin/AdminDestinationsPage";
@@ -41,8 +40,7 @@ import AdminEnginePage from "./pages/admin/AdminEnginePage";
 import AdminReservationsPage from "./pages/admin/AdminReservationsPage";
 import OrganizedTripsPage from "./pages/OrganizedTripsPage";
 import OrganizedTripDetailPage from "./pages/OrganizedTripDetailPage";
-import MyBookingsPage from "./pages/MyBookingsPage"; 
-
+import MyBookingsPage from "./pages/MyBookingsPage";
 
 const queryClient = new QueryClient();
 
@@ -51,24 +49,26 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <AdminAuthProvider>
-        <UserAuthProvider>
+      <UserAuthProvider>
           <NotificationsProvider>
             <CartProvider>
               <WishlistProvider>
                 <BrowserRouter>
                   <Routes>
-                    {/* Admin Routes */}
-                    <Route path="/admin/login" element={<AdminLoginPage />} />
-                    <Route path="/admin" element={<AdminLayout />}>
-                      <Route index element={<AdminDashboardPage />} />
-                      <Route path="users" element={<AdminUsersPage />} />
-                      <Route path="destinations" element={<AdminDestinationsPage />} />
-                      <Route path="experiences" element={<AdminExperiencesPage />} />
-                      <Route path="festivals" element={<AdminFestivalsPage />} />
-                      <Route path="trips" element={<AdminTripsPage />} />
-                      <Route path="engine" element={<AdminEnginePage />} />
-                      <Route path="reservations" element={<AdminReservationsPage />} />
+                    
+
+                    {/* Admin Routes (protégées) */}
+                    <Route path="/admin" element={<AdminProtectedRoute />}>
+                      <Route element={<AdminLayout />}>
+                        <Route index element={<AdminDashboardPage />} />
+                        <Route path="users" element={<AdminUsersPage />} />
+                        <Route path="destinations" element={<AdminDestinationsPage />} />
+                        <Route path="experiences" element={<AdminExperiencesPage />} />
+                        <Route path="festivals" element={<AdminFestivalsPage />} />
+                        <Route path="trips" element={<AdminTripsPage />} />
+                        <Route path="engine" element={<AdminEnginePage />} />
+                        <Route path="reservations" element={<AdminReservationsPage />} />
+                      </Route>
                     </Route>
 
                     {/* Auth Routes - No Navbar/Footer */}
@@ -92,7 +92,7 @@ const App = () => (
                             <Route path="/destinations" element={<DestinationsPage />} />
                             <Route path="/destinations/:slug" element={<DestinationDetailPage />} />
                             <Route path="/experiences" element={<ExperiencesPage />} />
-                           <Route path="/experiences/:slug" element={<ExperienceDetailPage />} />
+                            <Route path="/experiences/:slug" element={<ExperienceDetailPage />} />
                             <Route path="/festivals" element={<FestivalsPage />} />
                             <Route path="/festivals/:slug" element={<FestivalDetailPage />} />
                             <Route path="/moteur" element={<MoteurPage />} />
@@ -115,7 +115,6 @@ const App = () => (
             </CartProvider>
           </NotificationsProvider>
         </UserAuthProvider>
-      </AdminAuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { useUserAuth } from '@/contexts/UserAuthContext';
 
 const menuItems = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -30,7 +30,7 @@ const menuItems = [
 export function AdminSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-  const { logout, user } = useAdminAuth();
+  const { logout, user } = useUserAuth();
 
   const isActive = (path: string) => {
     if (path === '/admin') return location.pathname === '/admin';
@@ -80,7 +80,7 @@ export function AdminSidebar() {
       <div className="p-4 border-t border-background/10">
         {!collapsed && user && (
           <div className="mb-3 px-3">
-            <div className="text-sm font-medium">{user.name}</div>
+            <div className="text-sm font-medium">{user.nom}</div>
             <div className="text-xs text-background/60">{user.email}</div>
           </div>
         )}

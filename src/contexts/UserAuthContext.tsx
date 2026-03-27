@@ -35,7 +35,7 @@ interface UpdateProfileData {
 
 interface UserAuthContextType {
   user: UserProfile | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ user: UserProfile }>;
   register: (data: any) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: UpdateProfileData) => Promise<boolean>;
@@ -49,27 +49,27 @@ const UserAuthContext = createContext<UserAuthContextType | undefined>(undefined
 export const UserAuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [trips] = useState<Trip[]>([]);
-  const [loading, setLoading] = useState(true); // ✅ True au départ
+  const [loading, setLoading] = useState(true); // True au départ
 
-  // ✅ Charger l'utilisateur au montage du composant
+  //  Charger l'utilisateur au montage du composant
   useEffect(() => {
     const loadUser = async () => {
       const token = localStorage.getItem('accessToken');
-      console.log('🔑 Token au chargement:', token ? 'Présent' : 'Absent');
+      console.log(' Token au chargement:', token ? 'Présent' : 'Absent');
       
       if (!token) {
-        console.log('❌ Pas de token, utilisateur non connecté');
+        console.log(' Pas de token, utilisateur non connecté');
         setLoading(false);
         return;
       }
 
       try {
         console.log('🔄 Chargement du profil utilisateur...');
-        const response = await api.get('/users/me');
+        const response = await api.get('/auth/check-admin');
         console.log('✅ Profil utilisateur chargé:', response.data);
-        
-        const userData = response.data.data || response.data;
-        
+
+        const userData = response.data.data?.user || response.data.data || response.data;
+
         const userProfile: UserProfile = {
           id: userData.id,
           email: userData.email,
@@ -84,10 +84,10 @@ export const UserAuthProvider = ({ children }: { children: ReactNode }) => {
         };
         
         setUser(userProfile);
-        console.log('✅ Utilisateur connecté:', userProfile.email);
+        console.log(' Utilisateur connecté:', userProfile.email);
         
       } catch (error: any) {
-        console.error('❌ Erreur chargement utilisateur:', error.message);
+        console.error(' Erreur chargement utilisateur:', error.message);
         // Token invalide ou expiré, on nettoie
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
@@ -100,7 +100,7 @@ export const UserAuthProvider = ({ children }: { children: ReactNode }) => {
     loadUser();
   }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (email: string, password: string): Promise<{ user: UserProfile }> => {
     try {
       const response = await authService.login({ email, password });
       
@@ -120,6 +120,9 @@ export const UserAuthProvider = ({ children }: { children: ReactNode }) => {
       
       setUser(userProfile);
       console.log('✅ Connexion réussie:', userProfile.email);
+      
+      // ✅ Retourner les données utilisateur
+      return { user: userProfile };
       
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Erreur de connexion';
