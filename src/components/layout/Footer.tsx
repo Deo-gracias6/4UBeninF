@@ -82,7 +82,7 @@ export function Footer() {
               </a>
               <a href="tel:+22901234567" className="flex items-center gap-3 text-white/60 hover:text-accent transition-colors text-sm">
                 <Phone className="w-5 h-5" />
-                +229 01 234 567
+                
               </a>
               <div className="flex items-start gap-3 text-white/60 text-sm">
                 <MapPin className="w-5 h-5 shrink-0" />
@@ -94,11 +94,9 @@ export function Footer() {
 
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-white/40 text-sm">
-            © 2025 4UBENIN. Tous droits réservés.
+            © 2026 4UBENIN. Tous droits réservés.
           </p>
-          <p className="text-white/40 text-sm">
-            Créé avec ❤️ pour le tourisme béninois
-          </p>
+        
         </div>
       </div>
     </footer>
