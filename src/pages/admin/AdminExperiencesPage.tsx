@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Search, Edit, Trash2, Sparkles } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Loader2, MapPin, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { mockExperiences, type Experience } from '@/data/mockAdminData';
 import {
   Dialog,
   DialogContent,
@@ -13,103 +12,175 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
-
-const categoryLabels = {
-  culture: 'Culture & Traditions',
-  artisanat: 'Artisanat',
-  gastronomie: 'Gastronomie',
-  nature: 'Nature & Aventure',
-};
+import adminExperienceService, { AdminExperience, ExperienceFormData } from '@/services/adminExperienceService';
+import adminUtilsService, { Destination, Category } from '@/services/adminUtilsService';
 
 export default function AdminExperiencesPage() {
-  const [experiences, setExperiences] = useState(mockExperiences);
+  const [experiences, setExperiences] = useState<AdminExperience[]>([]);
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingExp, setEditingExp] = useState<Experience | null>(null);
+  const [editingExp, setEditingExp] = useState<AdminExperience | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const [formData, setFormData] = useState({
-    title: '',
-    category: 'culture' as Experience['category'],
+  const [formData, setFormData] = useState<ExperienceFormData>({
+    name: '',
     description: '',
+    included: '',
+    destination_id: '',
+    category_id: '',
     price: 0,
-    duration: '',
-    days: 1,
-    intensity: 'modéré' as Experience['intensity'],
-    available: true,
+    duration_minutes: 120,
+    max_participants: 15,
+    main_image: '',
+    latitude: undefined,
+    longitude: undefined,
+    is_active: true,
   });
+
+  // Charger les données au montage
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      // Charger en parallèle
+      const [expResponse, destResponse, catResponse] = await Promise.all([
+        adminExperienceService.getAll(),
+        adminUtilsService.getDestinations(),
+        adminUtilsService.getCategories(),
+      ]);
+
+      setExperiences(expResponse.experiences || []);
+      setDestinations(destResponse || []);
+      setCategories(catResponse || []);
+    } catch (error: any) {
+      console.error('Erreur chargement:', error);
+      toast({
+        title: 'Erreur',
+        description: error.response?.data?.error?.message || 'Impossible de charger les données',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredExperiences = experiences.filter(
     (e) =>
-      e.title.toLowerCase().includes(search.toLowerCase()) ||
-      e.category.toLowerCase().includes(search.toLowerCase())
+      e.name.toLowerCase().includes(search.toLowerCase()) ||
+      e.destination?.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (editingExp) {
-      setExperiences(
-        experiences.map((exp) =>
-          exp.id === editingExp.id ? { ...exp, ...formData } : exp
-        )
-      );
-      toast({ title: 'Expérience modifiée avec succès' });
-    } else {
-      const newExp: Experience = {
-        id: Date.now().toString(),
-        ...formData,
-        image: '/placeholder.svg',
-      };
-      setExperiences([...experiences, newExp]);
-      toast({ title: 'Expérience ajoutée avec succès' });
+    setSubmitting(true);
+
+    try {
+      if (editingExp) {
+        // Modification
+        await adminExperienceService.update(editingExp.id, formData);
+        toast({ title: ' Expérience modifiée avec succès' });
+      } else {
+        // Création
+        await adminExperienceService.create(formData);
+        toast({ title: ' Expérience ajoutée avec succès' });
+      }
+
+      setIsDialogOpen(false);
+      resetForm();
+      loadData(); // Recharger la liste
+    } catch (error: any) {
+      console.error('Erreur soumission:', error);
+      toast({
+        title: 'Erreur',
+        description: error.response?.data?.error?.message || 'Une erreur est survenue',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
     }
-    
-    setIsDialogOpen(false);
-    resetForm();
   };
 
-  const handleEdit = (exp: Experience) => {
+  const handleEdit = (exp: AdminExperience) => {
     setEditingExp(exp);
     setFormData({
-      title: exp.title,
-      category: exp.category,
+      name: exp.name,
       description: exp.description,
+      included: exp.included,
+      destination_id: exp.destination?.id || '',
+      category_id: exp.category?.id || '',
       price: exp.price,
-      duration: exp.duration,
-      days: exp.days,
-      intensity: exp.intensity,
-      available: exp.available,
+      duration_minutes: exp.durationMinutes,
+      max_participants: exp.maxParticipants,
+      main_image: exp.mainImage || '',
+      latitude: exp.latitude || undefined,
+      longitude: exp.longitude || undefined,
+      is_active: exp.isActive,
     });
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setExperiences(experiences.filter((e) => e.id !== id));
-    toast({ title: 'Expérience supprimée' });
+  const handleDelete = async (id: string) => {
+    if (!confirm('Voulez-vous vraiment supprimer cette expérience ?')) return;
+
+    try {
+      await adminExperienceService.delete(id);
+      toast({ title: ' Expérience supprimée' });
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: 'Erreur',
+        description: error.response?.data?.error?.message || 'Impossible de supprimer',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const toggleAvailability = (id: string) => {
-    setExperiences(
-      experiences.map((e) =>
-        e.id === id ? { ...e, available: !e.available } : e
-      )
-    );
+  const toggleAvailability = async (id: string, currentStatus: boolean) => {
+    try {
+      await adminExperienceService.toggleActive(id, !currentStatus);
+      toast({ title: currentStatus ? 'Expérience désactivée' : 'Expérience activée' });
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de modifier le statut',
+        variant: 'destructive',
+      });
+    }
   };
 
   const resetForm = () => {
     setEditingExp(null);
     setFormData({
-      title: '',
-      category: 'culture',
+      name: '',
       description: '',
+      included: '',
+      destination_id: '',
+      category_id: '',
       price: 0,
-      duration: '',
-      days: 1,
-      intensity: 'modéré',
-      available: true,
+      duration_minutes: 120,
+      max_participants: 15,
+      main_image: '',
+      latitude: undefined,
+      longitude: undefined,
+      is_active: true,
     });
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -119,7 +190,7 @@ export default function AdminExperiencesPage() {
           <h1 className="font-serif text-3xl font-bold">Expériences</h1>
           <p className="text-muted-foreground">Gérez les expériences touristiques</p>
         </div>
-        
+
         <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
             <Button variant="hero" className="gap-2">
@@ -127,101 +198,183 @@ export default function AdminExperiencesPage() {
               Ajouter une expérience
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-serif text-xl">
                 {editingExp ? 'Modifier l\'expérience' : 'Nouvelle expérience'}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+              {/* Nom */}
               <div>
-                <label className="text-sm font-medium mb-2 block">Titre</label>
+                <label className="text-sm font-medium mb-2 block">Nom de l'expérience *</label>
                 <Input
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Ex: Cérémonie Vodoun authentique"
                   required
                 />
               </div>
+
+              {/* Destination */}
               <div>
-                <label className="text-sm font-medium mb-2 block">Catégorie</label>
+                <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  Destination *
+                </label>
                 <select
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value as Experience['category'] })}
+                  value={formData.destination_id}
+                  onChange={(e) => setFormData({ ...formData, destination_id: e.target.value })}
                   className="w-full h-10 rounded-lg border border-input bg-background px-3"
+                  required
                 >
-                  <option value="culture">Culture & Traditions</option>
-                  <option value="artisanat">Artisanat</option>
-                  <option value="gastronomie">Gastronomie</option>
-                  <option value="nature">Nature & Aventure</option>
+                  <option value="">-- Sélectionnez une destination --</option>
+                  {destinations.map((dest) => (
+                    <option key={dest.id} value={dest.id}>
+                      {dest.name}
+                    </option>
+                  ))}
                 </select>
               </div>
+
+              {/* Catégorie */}
               <div>
-                <label className="text-sm font-medium mb-2 block">Description</label>
-                <Input
+                <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-primary" />
+                  Catégorie (optionnel)
+                </label>
+                <select
+                  value={formData.category_id}
+                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                  className="w-full h-10 rounded-lg border border-input bg-background px-3"
+                >
+                  <option value="">-- Aucune catégorie --</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">Description *</label>
+                <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Description courte"
+                  placeholder="Décrivez l'expérience en quelques phrases..."
+                  rows={3}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2"
                   required
                 />
               </div>
+
+              {/* Inclus */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">Ce qui est inclus *</label>
+                <Input
+                  value={formData.included}
+                  onChange={(e) => setFormData({ ...formData, included: e.target.value })}
+                  placeholder="Ex: Guide, transport, repas, photos..."
+                  required
+                />
+              </div>
+
+              {/* Prix & Durée */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Prix (FCFA)</label>
+                  <label className="text-sm font-medium mb-2 block">Prix (FCFA) *</label>
                   <Input
                     type="number"
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                    min={0}
                     required
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Durée</label>
-                  <Input
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                    placeholder="Ex: 4 heures"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Nombre de jours</label>
+                  <label className="text-sm font-medium mb-2 block">Durée (minutes) *</label>
                   <Input
                     type="number"
-                    value={formData.days}
-                    onChange={(e) => setFormData({ ...formData, days: Number(e.target.value) })}
-                    min={1}
+                    value={formData.duration_minutes}
+                    onChange={(e) => setFormData({ ...formData, duration_minutes: Number(e.target.value) })}
+                    min={30}
+                    step={30}
                     required
                   />
                 </div>
+              </div>
+
+              {/* Participants max */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">Nombre max de participants *</label>
+                <Input
+                  type="number"
+                  value={formData.max_participants}
+                  onChange={(e) => setFormData({ ...formData, max_participants: Number(e.target.value) })}
+                  min={1}
+                  required
+                />
+              </div>
+
+              {/* Image URL */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">URL de l'image</label>
+                <Input
+                  value={formData.main_image}
+                  onChange={(e) => setFormData({ ...formData, main_image: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+
+              {/* Coordonnées GPS */}
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Intensité</label>
-                  <select
-                    value={formData.intensity}
-                    onChange={(e) => setFormData({ ...formData, intensity: e.target.value as Experience['intensity'] })}
-                    className="w-full h-10 rounded-lg border border-input bg-background px-3"
-                  >
-                    <option value="facile">Facile</option>
-                    <option value="modéré">Modéré</option>
-                    <option value="intense">Intense</option>
-                  </select>
+                  <label className="text-sm font-medium mb-2 block">Latitude</label>
+                  <Input
+                    type="number"
+                    step="0.000001"
+                    value={formData.latitude || ''}
+                    onChange={(e) => setFormData({ ...formData, latitude: e.target.value ? Number(e.target.value) : undefined })}
+                    placeholder="6.3667"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Longitude</label>
+                  <Input
+                    type="number"
+                    step="0.000001"
+                    value={formData.longitude || ''}
+                    onChange={(e) => setFormData({ ...formData, longitude: e.target.value ? Number(e.target.value) : undefined })}
+                    placeholder="2.4167"
+                  />
                 </div>
               </div>
+
+              {/* Statut actif */}
               <div className="flex items-center gap-3">
                 <Switch
-                  checked={formData.available}
-                  onCheckedChange={(checked) => setFormData({ ...formData, available: checked })}
+                  checked={formData.is_active}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
                 />
-                <label className="text-sm font-medium">Disponible</label>
+                <label className="text-sm font-medium">Expérience active</label>
               </div>
+
+              {/* Boutons */}
               <div className="flex gap-3 pt-4">
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setIsDialogOpen(false)}>
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setIsDialogOpen(false)} disabled={submitting}>
                   Annuler
                 </Button>
-                <Button type="submit" variant="hero" className="flex-1">
-                  {editingExp ? 'Modifier' : 'Ajouter'}
+                <Button type="submit" variant="hero" className="flex-1" disabled={submitting}>
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Enregistrement...
+                    </>
+                  ) : (
+                    editingExp ? 'Modifier' : 'Créer'
+                  )}
                 </Button>
               </div>
             </form>
@@ -250,32 +403,45 @@ export default function AdminExperiencesPage() {
             transition={{ delay: idx * 0.05 }}
             className="bg-card rounded-2xl overflow-hidden shadow-elegant"
           >
-            <div className="h-40 bg-secondary flex items-center justify-center">
-              <Sparkles className="w-12 h-12 text-muted-foreground/30" />
+            {/* Image */}
+            <div className="h-40 bg-secondary relative">
+              {exp.mainImage ? (
+                <img src={exp.mainImage} alt={exp.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <MapPin className="w-12 h-12 text-muted-foreground/30" />
+                </div>
+              )}
             </div>
+
             <div className="p-5">
+              {/* Header */}
               <div className="flex items-start justify-between mb-2">
-                <span className="px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                  {categoryLabels[exp.category]}
-                </span>
+                <div className="flex-1">
+                  {exp.destination && (
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                      {exp.destination.name}
+                    </span>
+                  )}
+                </div>
                 <Switch
-                  checked={exp.available}
-                  onCheckedChange={() => toggleAvailability(exp.id)}
+                  checked={exp.isActive}
+                  onCheckedChange={() => toggleAvailability(exp.id, exp.isActive)}
                 />
               </div>
-              <h3 className="font-serif text-lg font-semibold mb-1">{exp.title}</h3>
+
+              {/* Titre */}
+              <h3 className="font-serif text-lg font-semibold mb-1 line-clamp-2">{exp.name}</h3>
               <p className="text-muted-foreground text-sm mb-3 line-clamp-2">{exp.description}</p>
+
+              {/* Stats */}
               <div className="flex items-center gap-4 text-sm mb-4">
                 <span className="font-semibold text-primary">{exp.price.toLocaleString()} FCFA</span>
-                <span className="text-muted-foreground">{exp.duration}</span>
-                <span className={`px-2 py-0.5 rounded-full text-xs ${
-                  exp.intensity === 'facile' ? 'bg-nature/20 text-nature' :
-                  exp.intensity === 'modéré' ? 'bg-accent/20 text-accent-dark' :
-                  'bg-destructive/20 text-destructive'
-                }`}>
-                  {exp.intensity}
-                </span>
+                <span className="text-muted-foreground">{exp.durationMinutes} min</span>
+                <span className="text-muted-foreground">Max {exp.maxParticipants}</span>
               </div>
+
+              {/* Actions */}
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => handleEdit(exp)}>
                   <Edit className="w-4 h-4" />
@@ -289,6 +455,13 @@ export default function AdminExperiencesPage() {
           </motion.div>
         ))}
       </div>
+
+      {/* Empty state */}
+      {filteredExperiences.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Aucune expérience trouvée</p>
+        </div>
+      )}
     </div>
   );
 }

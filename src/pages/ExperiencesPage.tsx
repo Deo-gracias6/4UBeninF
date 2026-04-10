@@ -36,40 +36,23 @@ export default function ExperiencesPage() {
   const [categories, setCategories] = useState<ExperienceCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Charger toutes les catégories et leurs expériences au montage
+  // ✅ Charger TOUTES les expériences directement
   useEffect(() => {
     const loadAllData = async () => {
       try {
         setLoading(true);
 
-        // Charger les catégories
-        const catData = await categoryService.getAll({ language: 'fr' });
+        // Charger les catégories ET les expériences en parallèle
+        const [catData, expData] = await Promise.all([
+          categoryService.getAll({ language: 'fr' }),
+          experienceService.getAll({ language: 'fr' }) // ← Charge TOUTES les expériences
+        ]);
+
         console.log('📂 Catégories chargées:', catData);
+        console.log('🎭 Expériences chargées:', expData);
+
         setCategories(catData);
-
-        // Charger les expériences de CHAQUE catégorie
-        const allExps: Experience[] = [];
-        
-        for (const category of catData) {
-          try {
-            const categoryDetails = await categoryService.getBySlug(category.slug, 100);
-            const experiences = categoryDetails.experiences || [];
-            
-            // Ajouter l'ID de catégorie à chaque expérience
-            const expsWithCategory = experiences.map((exp: any) => ({
-              ...exp,
-              categoryId: category.id,
-            }));
-            
-            allExps.push(...expsWithCategory);
-            console.log(`✅ ${category.name}: ${experiences.length} expériences`);
-          } catch (error) {
-            console.warn(`⚠️ Pas d'expériences pour ${category.name}`);
-          }
-        }
-
-        console.log('🎭 Total expériences chargées:', allExps.length);
-        setAllExperiences(allExps);
+        setAllExperiences(expData);
 
       } catch (error) {
         console.error('❌ Erreur chargement:', error);
@@ -83,7 +66,7 @@ export default function ExperiencesPage() {
 
   // Filtrer les expériences selon la catégorie sélectionnée
   const filteredExperiences = selectedCategory
-    ? allExperiences.filter((exp: any) => exp.categoryId === selectedCategory)
+    ? allExperiences.filter((exp: any) => exp.category?.id === selectedCategory)
     : allExperiences;
 
   if (loading) {
@@ -139,7 +122,7 @@ export default function ExperiencesPage() {
             {/* Catégories depuis la DB */}
             {categories.map((cat) => {
               const IconComponent = iconMap[cat.icon] || Sparkles;
-              const count = allExperiences.filter((exp: any) => exp.categoryId === cat.id).length;
+              const count = allExperiences.filter((exp: any) => exp.category?.id === cat.id).length;
               
               return (
                 <button
@@ -171,7 +154,7 @@ export default function ExperiencesPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredExperiences.map((exp: any, idx) => {
               const price = parseFloat(exp.price) || 0;
-              const category = categories.find(c => c.id === exp.categoryId);
+              const category = exp.category || categories.find(c => c.id === exp.categoryId);
               
               return (
                 <motion.div

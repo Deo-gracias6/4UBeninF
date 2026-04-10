@@ -12,7 +12,7 @@ import { RecommendedSection } from "@/components/recommendations/RecommendedSect
 import { OrganizedTripsSection } from "@/components/home/OrganizedTripsSection";
 import { useCart } from "@/contexts/CartContext";
 
-// ✅ Imports par défaut (sans accolades pour les services)
+// Imports par défaut (sans accolades pour les services)
 import destinationService, { Destination } from "@/services/destinationService";
 import experienceService, { Experience } from "@/services/experienceService";
 import festivalService, { Festival } from "@/services/festivalService";
@@ -45,9 +45,9 @@ useEffect(() => {
       setDestinations((destDataRaw as Destination[]).slice(0, 3));
       setFestivals((festDataRaw as Festival[]).slice(0, 4));
 
-      // ✅ Charger les expériences via les catégories (comme ExperiencesPage)
+      //  Charger les expériences via les catégories (comme ExperiencesPage)
       const catData = await categoryService.getAll({ language: 'fr' });
-      console.log('📂 Catégories:', catData);
+      console.log(' Catégories:', catData);
 
       const allExps: any[] = [];
 
@@ -64,9 +64,9 @@ useEffect(() => {
           }));
           
           allExps.push(...expsWithCategory);
-          console.log(`✅ ${category.name}: ${exps.length} expériences`);
+          console.log(` ${category.name}: ${exps.length} expériences`);
         } catch (error) {
-          console.warn(`⚠️ Pas d'expériences pour ${category.name}`);
+          console.warn(` Pas d'expériences pour ${category.name}`);
         }
       }
 
