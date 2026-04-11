@@ -16,7 +16,7 @@ export default function DestinationsPage() {
 
   //  Charger depuis backend
   useEffect(() => {
-  fetch("http://localhost:5000/api/destinations")
+  fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/destinations`)
     .then(res => res.json())
     .then(result => {
       console.log("API:", result);
